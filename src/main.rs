@@ -3,20 +3,30 @@ extern crate lazy_static;
 extern crate tfe;
 
 mod board;
+mod search;
 
 use board::Board;
+use search::Search;
 
 fn main() {
-    let mut b = Board::new();
+    let score = play_random_game();
+    println!("Final Score: {}", score);
+}
 
-    b = b.gen_moves()[2].1.clone();
-    println!("{:?}", b);
-    b = b.gen_tile_spawns()[2].1.clone();
-    println!("{:?}", b);
+fn play_random_game() -> u64 {
+    let mut board = Board::new();
+    let mut search = Search::new();
+
+    println!("{:?}", board);
     println!();
 
-    b = b.gen_moves()[2].1.clone();
-    println!("{:?}", b);
-    b = b.gen_tile_spawns()[2].1.clone();
-    println!("{:?}", b);
+    while !board.is_dead() {
+        let mov = search.search(board.clone(), 2);
+        board = board.make_move(&mov);
+
+        println!("{:?}", board);
+        println!();
+    }
+
+    board.score()
 }

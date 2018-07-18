@@ -20,9 +20,41 @@ impl Board {
         Board { inner: Game::new() }
     }
 
+    fn from_u64(bitboard: u64) -> Board {
+        Board {
+            inner: Game { board: bitboard },
+        }
+    }
+
     pub fn at(&self, x: u64, y: u64) -> u64 {
         let tile_index = y * 4 + x;
         (self.inner.board >> (tile_index * 4)) & 0xF
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.gen_moves().len() == 0
+    }
+
+    pub fn score(&self) -> u64 {
+        let mut s = 0;
+
+        for i in 0..4 {
+            for j in 0..4 {
+                let tile = self.at(i, j);
+                if tile > 1 {
+                    s += (tile - 1) * (2 << tile);
+                }
+            }
+        }
+
+        s
+    }
+
+    pub fn make_move(&self, direction: &Direction) -> Board {
+        let shifted = Game::execute(self.inner.board, direction);
+        let spawned_tile = Game::spawn_tile(shifted);
+
+        Self::from_u64(shifted | spawned_tile)
     }
 
     pub fn gen_moves(&self) -> Vec<(Direction, Board)> {
