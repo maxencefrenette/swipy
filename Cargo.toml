@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["Maxence Frenette <maxence.frenette@gmail.com>"]
 
 [dependencies]
+clap = "2.32.0"
 lazy_static = "1.0.2"
 tfe = "0.1"
