@@ -50,6 +50,21 @@ impl Board {
         s
     }
 
+    pub fn count_empties(&self) -> u64 {
+        let mut bitboard = self.inner.board;
+        let mut empties = 0;
+
+        for _ in 0..16 {
+            if bitboard & 0xF == 0 {
+                empties += 1;
+            }
+
+            bitboard >>= 4;
+        }
+
+        empties
+    }
+
     pub fn make_move(&self, direction: &Direction) -> Board {
         let shifted = Game::execute(self.inner.board, direction);
         let spawned_tile = Game::spawn_tile(shifted);

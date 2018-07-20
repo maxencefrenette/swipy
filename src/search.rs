@@ -52,6 +52,6 @@ impl Search {
 
     /// Statically evaluates the given position
     fn static_eval(&mut self, board: Board) -> u64 {
-        board.score()
+        board.score() + 100 * board.count_empties() + 100
     }
 }
