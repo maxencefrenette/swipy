@@ -4,13 +4,15 @@ extern crate clap;
 extern crate lazy_static;
 extern crate tfe;
 
-use clap::{App, AppSettings, SubCommand};
+use clap::{App, AppSettings, Arg, SubCommand};
 
 mod board;
 mod search;
+mod stats;
 
 use board::Board;
 use search::Search;
+use stats::average;
 
 fn main() {
     let app = init_clap();
@@ -22,18 +24,25 @@ fn main() {
             println!("Final Score: {}", score);
         }
         "bench" => {
-            let mut score = 0f64;
+            let subcommand_matches = matches.subcommand_matches("bench").unwrap();
+            let num_games = subcommand_matches
+                .value_of("N")
+                .expect("required arg")
+                .parse::<u64>()
+                .expect("number");
 
-            for i in 0..100 {
+            let mut scores = Vec::with_capacity(num_games as usize);
+
+            for i in 0..num_games {
                 if i % 5 == 0 && i != 0 {
                     println!("{}", i);
                 }
 
-                score += play_random_game(false) as f64;
+                scores.push(play_random_game(false) as f64);
             }
 
-            println!("100 games played.");
-            println!("Average score: {}", score / 100.0);
+            println!("{} games played.", num_games);
+            println!("Average score: {}", average(&scores));
         }
         _ => unreachable!(),
     }
@@ -42,10 +51,16 @@ fn main() {
 fn init_clap<'a, 'b>() -> App<'a, 'b> {
     let play = SubCommand::with_name("play")
         .about("plays one game, logging the board to the command line");
-    let bench =
-        SubCommand::with_name("bench").about("plays N games to test the strength of the AI");
+    let bench = SubCommand::with_name("bench")
+        .about("plays N games to test the strength of the AI")
+        .arg(
+            Arg::with_name("N")
+                .help("The amount of games to play")
+                .required(true)
+                .takes_value(true),
+        );
 
-    App::new("My Super Program")
+    App::new("Swipy - 2048 AI")
         .author(crate_authors!(", "))
         .version(crate_version!())
         .about("A 2048 AI")
