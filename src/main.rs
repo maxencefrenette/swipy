@@ -12,7 +12,7 @@ mod stats;
 
 use board::Board;
 use search::Search;
-use stats::average;
+use stats::{mean, standard_dev};
 
 fn main() {
     let app = init_clap();
@@ -35,14 +35,20 @@ fn main() {
 
             for i in 0..num_games {
                 if i % 5 == 0 && i != 0 {
-                    println!("{}", i);
+                    println!("{}/{}", i, num_games);
                 }
 
                 scores.push(play_random_game(false) as f64);
             }
 
+            let avg = mean(&scores);
+            let sd = standard_dev(&scores, avg);
+            let lower_bound = avg - 2. * sd;
+            let upper_bound = avg + 2. * sd;
+
             println!("{} games played.", num_games);
-            println!("Average score: {}", average(&scores));
+            println!("Average score: {} +- {}", avg, sd);
+            println!("Confidence interval: [{}, {}]", lower_bound, upper_bound);
         }
         _ => unreachable!(),
     }
