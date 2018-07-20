@@ -38,7 +38,7 @@ fn main() {
                     println!("{}/{}", i, num_games);
                 }
 
-                scores.push(play_random_game(false) as f64);
+                scores.push(play_random_game(false) as f32);
             }
 
             let avg = mean(&scores);

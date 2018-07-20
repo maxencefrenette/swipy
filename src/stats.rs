@@ -1,12 +1,12 @@
-pub fn mean(sample: &Vec<f64>) -> f64 {
-    sample.iter().sum::<f64>() / (sample.len() as f64)
+pub fn mean(sample: &Vec<f32>) -> f32 {
+    sample.iter().sum::<f32>() / (sample.len() as f32)
 }
 
-pub fn standard_dev(sample: &Vec<f64>, x_0: f64) -> f64 {
-    let n = sample.len() as f64;
+pub fn standard_dev(sample: &Vec<f32>, x_0: f32) -> f32 {
+    let n = sample.len() as f32;
     (mean(&sample.iter().map(|x| square(x - x_0)).collect()) / (n - 1.)).sqrt()
 }
 
-fn square(x: f64) -> f64 {
+fn square(x: f32) -> f32 {
     x * x
 }

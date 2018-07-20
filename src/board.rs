@@ -90,8 +90,8 @@ impl Board {
         result
     }
 
-    pub fn gen_tile_spawns(&self) -> Vec<(f64, Board)> {
-        let mut results = Vec::<(f64, Board)>::new();
+    pub fn gen_tile_spawns(&self) -> Vec<(f32, Board)> {
+        let mut results = Vec::<(f32, Board)>::new();
         let mut tmp = self.inner.board;
 
         for i in 0..16 {
