@@ -20,7 +20,7 @@ impl Board {
         Board { inner: Game::new() }
     }
 
-    fn from_u64(bitboard: u64) -> Board {
+    pub fn from_u64(bitboard: u64) -> Board {
         Board {
             inner: Game { board: bitboard },
         }
