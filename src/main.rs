@@ -2,6 +2,7 @@
 extern crate clap;
 #[macro_use]
 extern crate lazy_static;
+extern crate statistical;
 extern crate tfe;
 
 use clap::{App, AppSettings, Arg, SubCommand};
@@ -9,12 +10,11 @@ use clap::{App, AppSettings, Arg, SubCommand};
 mod board;
 mod config;
 mod search;
-mod stats;
 
 use board::Board;
 use config::{Config, OPTIMIZED_CONFIG};
 use search::Search;
-use stats::{mean, standard_dev};
+use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 
 fn main() {
     let app = init_clap();
@@ -43,14 +43,19 @@ fn main() {
                 scores.push(play_random_game(OPTIMIZED_CONFIG, false) as f32);
             }
 
-            let avg = mean(&scores);
-            let sd = standard_dev(&scores, avg);
-            let lower_bound = avg - 2. * sd;
-            let upper_bound = avg + 2. * sd;
+            let avg = mean(scores.as_slice());
+            let sd = standard_deviation(scores.as_slice(), Some(avg));
+            let err = standard_error_mean(sd, scores.len() as f32, None);
+            let lower_bound = avg - 1.96 * err;
+            let upper_bound = avg + 1.96 * err;
 
             println!("{} games played.", num_games);
-            println!("Average score: {} +- {}", avg, sd);
-            println!("Confidence interval: [{}, {}]", lower_bound, upper_bound);
+            println!("Average score: {:.0} \u{00b1} {:.0}", avg, err);
+            println!("Standard deviation: {:.0}", sd);
+            println!(
+                "Confidence interval (95%): [{:.0}, {:.0}]",
+                lower_bound, upper_bound
+            );
         }
         _ => unreachable!(),
     }

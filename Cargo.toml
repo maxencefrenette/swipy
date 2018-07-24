@@ -6,4 +6,5 @@ authors = ["Maxence Frenette <maxence.frenette@gmail.com>"]
 [dependencies]
 clap = "2.32.0"
 lazy_static = "1.0.2"
+statistical = "0.1.1"
 tfe = "0.1"
