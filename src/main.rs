@@ -7,10 +7,12 @@ extern crate tfe;
 use clap::{App, AppSettings, Arg, SubCommand};
 
 mod board;
+mod config;
 mod search;
 mod stats;
 
 use board::Board;
+use config::{Config, OPTIMIZED_CONFIG};
 use search::Search;
 use stats::{mean, standard_dev};
 
@@ -20,7 +22,7 @@ fn main() {
 
     match matches.subcommand_name().unwrap() {
         "play" => {
-            let score = play_random_game(true);
+            let score = play_random_game(OPTIMIZED_CONFIG, true);
             println!("Final Score: {}", score);
         }
         "bench" => {
@@ -38,7 +40,7 @@ fn main() {
                     println!("{}/{}", i, num_games);
                 }
 
-                scores.push(play_random_game(false) as f32);
+                scores.push(play_random_game(OPTIMIZED_CONFIG, false) as f32);
             }
 
             let avg = mean(&scores);
@@ -74,9 +76,9 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .subcommands(vec![play, bench])
 }
 
-fn play_random_game(verbose: bool) -> u64 {
+fn play_random_game(config: Config, verbose: bool) -> u64 {
     let mut board = Board::new();
-    let mut search = Search::new();
+    let mut search = Search::new(config);
 
     if verbose {
         println!("{:?}", board);

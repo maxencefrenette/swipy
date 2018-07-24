@@ -1,12 +1,15 @@
 use board::Board;
+use config::Config;
 use std::iter::Iterator;
 use tfe::Direction;
 
-pub struct Search {}
+pub struct Search {
+    config: Config,
+}
 
 impl Search {
-    pub fn new() -> Search {
-        Search {}
+    pub fn new(config: Config) -> Search {
+        Search { config }
     }
 
     pub fn search(&mut self, board: Board, depth: u64) -> Direction {
@@ -51,8 +54,8 @@ impl Search {
     /// Statically evaluates the given position by evaluating the expected score
     fn static_eval(&mut self, board: Board) -> f32 {
         let mut eval = board.score() as f32;
-        eval += 100. * (board.count_empties() as f32);
-        eval += 100.;
+        eval += self.config.score_per_empty * (board.count_empties() as f32);
+        eval += self.config.continuation_bonus;
 
         eval
     }
