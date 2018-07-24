@@ -4,6 +4,6 @@ pub struct Config {
 }
 
 pub const OPTIMIZED_CONFIG: Config = Config {
-    score_per_empty: 100.,
+    score_per_empty: 200.,
     continuation_bonus: 100.,
 };
