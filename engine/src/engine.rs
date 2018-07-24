@@ -3,13 +3,13 @@ use config::Config;
 use std::iter::Iterator;
 use tfe::Direction;
 
-pub struct Search {
+pub struct Engine {
     config: Config,
 }
 
-impl Search {
-    pub fn new(config: Config) -> Search {
-        Search { config }
+impl Engine {
+    pub fn new(config: Config) -> Engine {
+        Engine { config }
     }
 
     pub fn search(&mut self, board: Board, depth: u64) -> Direction {

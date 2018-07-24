@@ -1,20 +1,11 @@
 #[macro_use]
 extern crate clap;
-#[macro_use]
-extern crate lazy_static;
 extern crate statistical;
-extern crate tfe;
+extern crate swipy_engine;
 
 use clap::{App, AppSettings, Arg, SubCommand};
-
-mod board;
-mod config;
-mod search;
-
-use board::Board;
-use config::{Config, OPTIMIZED_CONFIG};
-use search::Search;
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
+use swipy_engine::{Board, Config, Engine, OPTIMIZED_CONFIG};
 
 fn main() {
     let app = init_clap();
@@ -83,7 +74,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
 
 fn play_random_game(config: Config, verbose: bool) -> u64 {
     let mut board = Board::new();
-    let mut search = Search::new(config);
+    let mut engine = Engine::new(config);
 
     if verbose {
         println!("{:?}", board);
@@ -91,7 +82,7 @@ fn play_random_game(config: Config, verbose: bool) -> u64 {
     }
 
     while !board.is_dead() {
-        let mov = search.search(board.clone(), 2);
+        let mov = engine.search(board.clone(), 2);
         board = board.make_move(&mov);
 
         if verbose {
