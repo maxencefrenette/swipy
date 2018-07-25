@@ -31,7 +31,7 @@ fn main() {
                     println!("{}/{}", i, num_games);
                 }
 
-                scores.push(play_random_game(OPTIMIZED_CONFIG, false) as f32);
+                scores.push(play_random_game(OPTIMIZED_CONFIG, false));
             }
 
             let avg = mean(scores.as_slice());
@@ -72,7 +72,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .subcommands(vec![play, bench])
 }
 
-fn play_random_game(config: Config, verbose: bool) -> u64 {
+fn play_random_game(config: Config, verbose: bool) -> f32 {
     let mut board = Board::new();
     let mut engine = Engine::new(config);
 

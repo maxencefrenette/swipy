@@ -33,7 +33,7 @@ impl Engine {
 
         let moves = board.gen_moves();
         if moves.len() == 0 {
-            return board.score() as f32;
+            return board.score();
         }
 
         moves
@@ -53,7 +53,7 @@ impl Engine {
 
     /// Statically evaluates the given position by evaluating the expected score
     fn static_eval(&mut self, board: Board) -> f32 {
-        let mut eval = board.score() as f32;
+        let mut eval = board.score();
         eval += self.config.score_per_empty * (board.count_empties() as f32);
         eval += self.config.continuation_bonus;
 

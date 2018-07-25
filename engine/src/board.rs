@@ -1,6 +1,9 @@
+use lookup_table::LookupTable;
 use std::fmt;
 use std::vec::Vec;
 use tfe::{Direction, Game};
+
+const TILE_MASK: u16 = 0xF;
 
 lazy_static! {
     static ref DIRECTIONS: Vec<Direction> = vec![
@@ -9,6 +12,18 @@ lazy_static! {
         Direction::Up,
         Direction::Down,
     ];
+    static ref SCORE: LookupTable<f32> = LookupTable::new(|row| {
+        let mut s: u32 = 0;
+
+        for i in 0..4 {
+            let tile = ((row << (4 * i)) & TILE_MASK) as u32;
+            if tile > 1 {
+                s += (tile - 1) * (2 << tile);
+            }
+        }
+
+        s as f32
+    });
 }
 
 pub struct Board {
@@ -31,23 +46,16 @@ impl Board {
         (self.inner.board >> (tile_index * 4)) & 0xF
     }
 
+    pub fn row_at(&self, i: usize) -> u16 {
+        (self.inner.board >> (i * 4)) as u16
+    }
+
     pub fn is_dead(&self) -> bool {
         self.gen_moves().len() == 0
     }
 
-    pub fn score(&self) -> u64 {
-        let mut s = 0;
-
-        for i in 0..4 {
-            for j in 0..4 {
-                let tile = self.at(i, j);
-                if tile > 1 {
-                    s += (tile - 1) * (2 << tile);
-                }
-            }
-        }
-
-        s
+    pub fn score(&self) -> f32 {
+        (0..4).map(|i| SCORE[self.row_at(i)]).sum()
     }
 
     pub fn count_empties(&self) -> u64 {
