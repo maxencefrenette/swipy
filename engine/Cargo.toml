@@ -5,4 +5,4 @@ authors = ["Maxence Frenette <maxence.frenette@gmail.com>"]
 
 [dependencies]
 lazy_static = "1.0.2"
-tfe = "0.1"
+rand = "0.5.4"

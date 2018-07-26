@@ -82,7 +82,7 @@ fn play_random_game(config: Config, verbose: bool) -> f32 {
     }
 
     while !board.is_dead() {
-        let mov = engine.search(board.clone(), 2);
+        let mov = engine.search(board, 2);
         board = board.make_move(&mov);
 
         if verbose {
