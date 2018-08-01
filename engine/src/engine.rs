@@ -1,5 +1,5 @@
-use board::{Board, Direction};
 use config::Config;
+use game::{Board, Direction};
 use std::iter::Iterator;
 
 pub struct Engine {

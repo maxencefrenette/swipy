@@ -1,9 +1,9 @@
+use super::row::Row;
 use lookup_table::LookupTable;
 use rand::{
     distributions::{Distribution, Weighted, WeightedChoice},
     thread_rng,
 };
-use row::Row;
 use std::fmt;
 use std::vec::Vec;
 

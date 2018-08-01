@@ -1,4 +1,4 @@
-use row::Row;
+use game::Row;
 use std::ops::Index;
 use std::ops::IndexMut;
 

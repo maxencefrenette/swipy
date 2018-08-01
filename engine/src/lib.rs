@@ -2,12 +2,11 @@
 extern crate lazy_static;
 extern crate rand;
 
-mod board;
 mod config;
 mod engine;
+mod game;
 mod lookup_table;
-mod row;
 
-pub use board::*;
 pub use config::*;
 pub use engine::*;
+pub use game::*;
