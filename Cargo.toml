@@ -11,6 +11,7 @@ members = [
 
 [dependencies]
 clap = "2.32.0"
+cmaes = { git = "https://github.com/pengowen123/cmaes" }
 statistical = "0.1.1"
 swipy-engine = { version = "0.1.0", path = "engine" }
 

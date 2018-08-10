@@ -1,9 +1,11 @@
 #[macro_use]
 extern crate clap;
+extern crate cmaes;
 extern crate statistical;
 extern crate swipy_engine;
 
 use clap::{App, AppSettings, Arg, SubCommand};
+use cmaes::*;
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 use swipy_engine::{Board, Config, Engine, OPTIMIZED_CONFIG};
 
@@ -13,7 +15,8 @@ fn main() {
 
     match matches.subcommand_name().unwrap() {
         "play" => {
-            let score = play_random_game(OPTIMIZED_CONFIG, true);
+            let mut engine = Engine::new(OPTIMIZED_CONFIG);
+            let score = play_random_game(&mut engine, true);
             println!("Final Score: {}", score);
         }
         "bench" => {
@@ -25,13 +28,14 @@ fn main() {
                 .expect("number");
 
             let mut scores = Vec::with_capacity(num_games as usize);
+            let mut engine = Engine::new(OPTIMIZED_CONFIG);
 
             for i in 0..num_games {
                 if i % 5 == 0 && i != 0 {
                     println!("{}/{}", i, num_games);
                 }
 
-                scores.push(play_random_game(OPTIMIZED_CONFIG, false));
+                scores.push(play_random_game(&mut engine, false));
             }
 
             let avg = mean(scores.as_slice());
@@ -48,6 +52,16 @@ fn main() {
                 lower_bound, upper_bound
             );
         }
+        "train" => {
+            let subcommand_matches = matches.subcommand_matches("train").unwrap();
+            let num_batches = subcommand_matches
+                .value_of("N")
+                .expect("required arg")
+                .parse::<u64>()
+                .expect("number");
+
+            train(num_batches);
+        }
         _ => unreachable!(),
     }
 }
@@ -63,18 +77,25 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .takes_value(true),
         );
+    let train = SubCommand::with_name("train")
+        .about("continuously plays to optimize the AI")
+        .arg(
+            Arg::with_name("N")
+                .help("The amount of batches of 5 games to play")
+                .required(true)
+                .takes_value(true),
+        );
 
     App::new("Swipy - 2048 AI")
         .author(crate_authors!(", "))
         .version(crate_version!())
         .about("A 2048 AI")
         .setting(AppSettings::ArgRequiredElseHelp)
-        .subcommands(vec![play, bench])
+        .subcommands(vec![play, bench, train])
 }
 
-fn play_random_game(config: Config, verbose: bool) -> f32 {
+fn play_random_game(engine: &mut Engine, verbose: bool) -> f32 {
     let mut board = Board::new();
-    let mut engine = Engine::new(config);
 
     if verbose {
         println!("{:?}", board);
@@ -92,4 +113,48 @@ fn play_random_game(config: Config, verbose: bool) -> f32 {
     }
 
     board.score()
+}
+
+#[derive(Clone)]
+struct FitnessEvaluator;
+
+impl FitnessFunction for FitnessEvaluator {
+    fn get_fitness(&self, parameters: &[f64]) -> f64 {
+        let config = Config::from_vec(parameters.iter().map(|p| (*p as f32)).collect());
+        let mut engine = Engine::new(config);
+
+        let mut score: f64 = 0.;
+
+        for _ in 0..5 {
+            score += play_random_game(&mut engine, false) as f64;
+        }
+        score /= 5.;
+
+        println!("Score: {}", score);
+
+        -score
+    }
+}
+
+fn train(num_batches: u64) {
+    let options = CMAESOptions::custom(2)
+        .threads(1)
+        .initial_mean(
+            OPTIMIZED_CONFIG
+                .to_vec()
+                .iter()
+                .map(|p| (*p as f64))
+                .collect(),
+        )
+        .initial_standard_deviations(vec![10., 10.])
+        .initial_step_size(10.)
+        .stable_generations(500., 10)
+        .max_evaluations(num_batches as usize);
+
+    let solution = cmaes_loop(&FitnessEvaluator, options).unwrap();
+    let new_config = Config::from_vec(solution.0.iter().map(|p| (*p as f32)).collect());
+    let avg_score = -solution.1;
+
+    println!("New average score: {}", avg_score);
+    println!("{:?}", new_config);
 }
