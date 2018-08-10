@@ -1,14 +1,24 @@
 use config::Config;
 use game::{Board, Direction};
+use lookup_table::LookupTable;
 use std::iter::Iterator;
 
 pub struct Engine {
     config: Config,
+    eval_table: LookupTable<f32>,
 }
 
 impl Engine {
     pub fn new(config: Config) -> Engine {
-        Engine { config }
+        let eval_table = LookupTable::new(|row| {
+            let mut eval = row.score() / 2.;
+            eval += config.score_per_empty / 2. * (row.count_empties() as f32);
+            eval += config.continuation_bonus / 8.;
+
+            eval
+        });
+
+        Engine { config, eval_table }
     }
 
     pub fn search(&mut self, board: Board, depth: u64) -> Direction {
@@ -52,9 +62,15 @@ impl Engine {
 
     /// Statically evaluates the given position by evaluating the expected score
     fn static_eval(&mut self, board: Board) -> f32 {
-        let mut eval = board.score();
-        eval += self.config.score_per_empty * (board.count_empties() as f32);
-        eval += self.config.continuation_bonus;
+        let mut eval = 0.;
+
+        for i in 0..4 {
+            eval += self.eval_table[board.row_at(i)];
+        }
+
+        for i in 0..4 {
+            eval += self.eval_table[board.column_at(i)];
+        }
 
         eval
     }

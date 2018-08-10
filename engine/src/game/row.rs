@@ -42,6 +42,21 @@ impl Row {
             .sum()
     }
 
+    pub fn count_empties(&self) -> u64 {
+        let mut bitboard = self.0;
+        let mut empties = 0;
+
+        for _ in 0..4 {
+            if bitboard & 0xF == 0 {
+                empties += 1;
+            }
+
+            bitboard >>= 4;
+        }
+
+        empties
+    }
+
     pub fn moved(&self) -> Row {
         let mut tiles: Vec<u16> = (0..4).map(|i| self.tile_at(i)).collect();
 

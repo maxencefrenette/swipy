@@ -74,6 +74,17 @@ impl Board {
         Row::from_u16((self.0 >> (i * 16)) as u16)
     }
 
+    pub fn column_at(&self, i: usize) -> Row {
+        let bb = self.0 >> 4 * i;
+
+        let c1 = (bb & 0xF) as u16;
+        let c2 = ((bb >> 12) & 0xF0) as u16;
+        let c3 = ((bb >> 24) & 0xF00) as u16;
+        let c4 = ((bb >> 36) & 0xF000) as u16;
+
+        Row::from_u16(c4 | c3 | c2 | c1)
+    }
+
     pub fn is_dead(&self) -> bool {
         self.gen_moves().len() == 0
     }
