@@ -7,7 +7,7 @@ extern crate swipy_engine;
 use clap::{App, AppSettings, Arg, SubCommand};
 use cmaes::*;
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
-use swipy_engine::{Board, Config, Engine, OPTIMIZED_CONFIG};
+use swipy_engine::{Board, Config, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
 
 fn main() {
     let app = init_clap();
@@ -60,7 +60,9 @@ fn main() {
                 .parse::<u64>()
                 .expect("number");
 
-            train(num_batches);
+            let zero = subcommand_matches.is_present("zero");
+
+            train(num_batches, zero);
         }
         _ => unreachable!(),
     }
@@ -79,6 +81,11 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         );
     let train = SubCommand::with_name("train")
         .about("continuously plays to optimize the AI")
+        .arg(
+            Arg::with_name("zero")
+                .short("z")
+                .help("starts training from scratch"),
+        )
         .arg(
             Arg::with_name("N")
                 .help("The amount of batches of 5 games to play")
@@ -120,35 +127,47 @@ struct FitnessEvaluator;
 
 impl FitnessFunction for FitnessEvaluator {
     fn get_fitness(&self, parameters: &[f64]) -> f64 {
+        let batch_size = 10;
         let config = Config::from_vec(parameters.iter().map(|p| (*p as f32)).collect());
         let mut engine = Engine::new(config);
 
         let mut score: f64 = 0.;
 
-        for _ in 0..5 {
+        for _ in 0..batch_size {
             score += play_random_game(&mut engine, false) as f64;
         }
-        score /= 5.;
+        score /= batch_size as f64;
 
-        println!("Score: {}", score);
+        println!("Score: {:05.0}", score);
 
         -score
     }
 }
 
-fn train(num_batches: u64) {
-    let options = CMAESOptions::custom(2)
+fn train(num_batches: u64, zero: bool) {
+    let config = match zero {
+        true => DEFAULT_CONFIG,
+        false => OPTIMIZED_CONFIG,
+    };
+
+    let options = CMAESOptions::custom(Config::dimensions())
         .threads(1)
         .initial_mean(
-            OPTIMIZED_CONFIG
+            config
                 .to_vec()
                 .iter()
                 .map(|p| (*p as f64))
                 .collect(),
         )
-        .initial_standard_deviations(vec![10., 10.])
+        .initial_standard_deviations(
+            config
+                .to_vec()
+                .iter()
+                .map(|p| (*p * 0.05 + 1.) as f64)
+                .collect(),
+        )
         .initial_step_size(10.)
-        .stable_generations(500., 10)
+        // .stable_generations(250., 50)
         .max_evaluations(num_batches as usize);
 
     let solution = cmaes_loop(&FitnessEvaluator, options).unwrap();

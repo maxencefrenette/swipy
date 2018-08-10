@@ -12,8 +12,11 @@ impl Engine {
     pub fn new(config: Config) -> Engine {
         let eval_table = LookupTable::new(|row| {
             let mut eval = row.score() / 2.;
-            eval += config.score_per_empty / 2. * (row.count_empties() as f32);
-            eval += config.continuation_bonus / 8.;
+            
+            eval += config.outer_pos_bonus[row.tile_at(0) as usize];
+            eval += config.inner_pos_bonus[row.tile_at(1) as usize];
+            eval += config.inner_pos_bonus[row.tile_at(2) as usize];
+            eval += config.outer_pos_bonus[row.tile_at(3) as usize];
 
             eval
         });
