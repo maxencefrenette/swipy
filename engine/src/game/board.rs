@@ -108,6 +108,10 @@ impl Board {
         (0..4).map(|i| SCORE[self.row_at(i)]).sum()
     }
 
+    pub fn highest_tile(&self) -> u64 {
+        (0..16).map(|i| self.at(i / 4, i % 4)).max().unwrap()
+    }
+
     pub fn count_empties(&self) -> u64 {
         let mut bitboard = self.0;
         let mut empties = 0;

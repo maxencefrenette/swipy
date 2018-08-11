@@ -16,8 +16,8 @@ fn main() {
     match matches.subcommand_name().unwrap() {
         "play" => {
             let mut engine = Engine::new(OPTIMIZED_CONFIG);
-            let score = play_random_game(&mut engine, true);
-            println!("Final Score: {}", score);
+            let board = play_random_game(&mut engine, true);
+            println!("Final Score: {}", board.score());
         }
         "bench" => {
             let subcommand_matches = matches.subcommand_matches("bench").unwrap();
@@ -28,6 +28,7 @@ fn main() {
                 .expect("number");
 
             let mut scores = Vec::with_capacity(num_games as usize);
+            let mut tiles_reached = [0u64; 16];
             let mut engine = Engine::new(OPTIMIZED_CONFIG);
 
             for i in 0..num_games {
@@ -35,7 +36,13 @@ fn main() {
                     println!("{}/{}", i, num_games);
                 }
 
-                scores.push(play_random_game(&mut engine, false));
+                let board = play_random_game(&mut engine, false);
+
+                scores.push(board.score());
+
+                for i in 0..board.highest_tile() {
+                    tiles_reached[i as usize] += 1;
+                }
             }
 
             let avg = mean(scores.as_slice());
@@ -51,6 +58,15 @@ fn main() {
                 "Confidence interval (95%): [{:.0}, {:.0}]",
                 lower_bound, upper_bound
             );
+            println!();
+
+            for n in 8..13 {
+                println!(
+                    "{}: {}%",
+                    u64::pow(2, n),
+                    (tiles_reached[n as usize] as f32) * 100. / (num_games as f32)
+                );
+            }
         }
         "train" => {
             let subcommand_matches = matches.subcommand_matches("train").unwrap();
@@ -101,7 +117,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .subcommands(vec![play, bench, train])
 }
 
-fn play_random_game(engine: &mut Engine, verbose: bool) -> f32 {
+fn play_random_game(engine: &mut Engine, verbose: bool) -> Board {
     let mut board = Board::new();
 
     if verbose {
@@ -119,7 +135,7 @@ fn play_random_game(engine: &mut Engine, verbose: bool) -> f32 {
         }
     }
 
-    board.score()
+    board
 }
 
 #[derive(Clone)]
@@ -134,7 +150,8 @@ impl FitnessFunction for FitnessEvaluator {
         let mut score: f64 = 0.;
 
         for _ in 0..batch_size {
-            score += play_random_game(&mut engine, false) as f64;
+            let board = play_random_game(&mut engine, false);
+            score += board.score() as f64;
         }
         score /= batch_size as f64;
 
