@@ -184,7 +184,7 @@ impl Board {
         let mut items: Vec<Weighted<Board>> = self
             .gen_tile_spawns()
             .into_iter()
-            .map(|(tile, board)| Weighted {
+            .map(|(_prob, tile, board)| Weighted {
                 weight: (1000000. * tile.prob()) as u32,
                 item: board,
             })
@@ -194,13 +194,22 @@ impl Board {
         wc.sample(&mut rng)
     }
 
-    pub fn gen_tile_spawns(&self) -> Vec<(TileSpawn, Board)> {
-        let mut results = Vec::<(TileSpawn, Board)>::new();
+    pub fn gen_tile_spawns(&self) -> Vec<(f32, TileSpawn, Board)> {
+        let mut results = Vec::<(f32, TileSpawn, Board)>::new();
+        let n = self.count_empties() as f32;
 
         for i in 0..16 {
             if (self.0 >> (i * 4)) & 0xF == 0 {
-                results.push((TileSpawn::Two, Board(self.0 | 1 << (i * 4))));
-                results.push((TileSpawn::Four, Board(self.0 | 2 << (i * 4))));
+                results.push((
+                    TileSpawn::Two.prob() / n,
+                    TileSpawn::Two,
+                    Board(self.0 | 1 << (i * 4)),
+                ));
+                results.push((
+                    TileSpawn::Four.prob() / n,
+                    TileSpawn::Four,
+                    Board(self.0 | 2 << (i * 4)),
+                ));
             }
         }
 

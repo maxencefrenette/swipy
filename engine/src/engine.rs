@@ -62,15 +62,15 @@ impl Engine {
 
         moves
             .into_iter()
-            .map(|(tile, board)| {
+            .map(|(prob, tile, board)| {
                 let new_depth = match tile {
                     TileSpawn::Two => depth - 1.,
                     TileSpawn::Four => depth - DEPTH_PENALTY_4,
                 };
 
-                (tile, self.expectimax_moves(board, new_depth))
+                (prob, self.expectimax_moves(board, new_depth))
             })
-            .fold(0., |acc, (tile, score)| acc + tile.prob() * score)
+            .fold(0., |acc, (prob, score)| acc + prob * score)
     }
 
     /// Statically evaluates the given position by evaluating the expected score
