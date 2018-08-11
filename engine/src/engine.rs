@@ -1,7 +1,10 @@
 use config::Config;
-use game::{Board, Direction};
+use game::{Board, Direction, TileSpawn};
 use lookup_table::LookupTable;
 use std::iter::Iterator;
+
+// ln(0.1) / ln(0.9)
+const DEPTH_PENALTY_4: f32 = 21.85434532678;
 
 pub struct Engine {
     config: Config,
@@ -12,7 +15,7 @@ impl Engine {
     pub fn new(config: Config) -> Engine {
         let eval_table = LookupTable::new(|row| {
             let mut eval = row.score() / 2.;
-            
+
             eval += config.outer_pos_bonus[row.tile_at(0) as usize];
             eval += config.inner_pos_bonus[row.tile_at(1) as usize];
             eval += config.inner_pos_bonus[row.tile_at(2) as usize];
@@ -24,8 +27,8 @@ impl Engine {
         Engine { config, eval_table }
     }
 
-    pub fn search(&mut self, board: Board, depth: u64) -> Direction {
-        assert!(depth > 0, "Depth must be greater than 0.");
+    pub fn search(&mut self, board: Board, depth: f32) -> Direction {
+        assert!(depth > 0., "Depth must be greater than 0.");
 
         let moves = board.gen_moves();
 
@@ -38,8 +41,8 @@ impl Engine {
     }
 
     /// Searches the given board ang finds the best move
-    fn expectimax_moves(&mut self, board: Board, depth: u64) -> f32 {
-        if depth == 0 {
+    fn expectimax_moves(&mut self, board: Board, depth: f32) -> f32 {
+        if depth < 1. {
             return self.static_eval(board);
         }
 
@@ -54,13 +57,20 @@ impl Engine {
             .fold(0., |acc, value| if value > acc { value } else { acc })
     }
 
-    fn expectimax_spawn_tile(&mut self, board: Board, depth: u64) -> f32 {
+    fn expectimax_spawn_tile(&mut self, board: Board, depth: f32) -> f32 {
         let moves = board.gen_tile_spawns();
 
         moves
             .into_iter()
-            .map(|(prob, board)| (prob, self.expectimax_moves(board, depth - 1)))
-            .fold(0., |acc, (prob, score)| acc + prob * score)
+            .map(|(tile, board)| {
+                let new_depth = match tile {
+                    TileSpawn::Two => depth - 1.,
+                    TileSpawn::Four => depth - DEPTH_PENALTY_4,
+                };
+
+                (tile, self.expectimax_moves(board, new_depth))
+            })
+            .fold(0., |acc, (tile, score)| acc + tile.prob() * score)
     }
 
     /// Statically evaluates the given position by evaluating the expected score

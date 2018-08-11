@@ -15,6 +15,21 @@ pub enum Direction {
     Down,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TileSpawn {
+    Two,
+    Four,
+}
+
+impl TileSpawn {
+    pub fn prob(&self) -> f32 {
+        match self {
+            TileSpawn::Two => 0.9,
+            TileSpawn::Four => 0.1,
+        }
+    }
+}
+
 lazy_static! {
     static ref DIRECTIONS: Vec<Direction> = vec![
         Direction::Left,
@@ -169,8 +184,8 @@ impl Board {
         let mut items: Vec<Weighted<Board>> = self
             .gen_tile_spawns()
             .into_iter()
-            .map(|(prob, board)| Weighted {
-                weight: (1000000. * prob) as u32,
+            .map(|(tile, board)| Weighted {
+                weight: (1000000. * tile.prob()) as u32,
                 item: board,
             })
             .collect();
@@ -179,13 +194,13 @@ impl Board {
         wc.sample(&mut rng)
     }
 
-    pub fn gen_tile_spawns(&self) -> Vec<(f32, Board)> {
-        let mut results = Vec::<(f32, Board)>::new();
+    pub fn gen_tile_spawns(&self) -> Vec<(TileSpawn, Board)> {
+        let mut results = Vec::<(TileSpawn, Board)>::new();
 
         for i in 0..16 {
             if (self.0 >> (i * 4)) & 0xF == 0 {
-                results.push((0.9, Board(self.0 | 1 << (i * 4))));
-                results.push((0.1, Board(self.0 | 2 << (i * 4))));
+                results.push((TileSpawn::Two, Board(self.0 | 1 << (i * 4))));
+                results.push((TileSpawn::Four, Board(self.0 | 2 << (i * 4))));
             }
         }
 
