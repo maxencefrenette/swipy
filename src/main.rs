@@ -1,11 +1,13 @@
 #[macro_use]
 extern crate clap;
 extern crate cmaes;
+extern crate indicatif;
 extern crate statistical;
 extern crate swipy_engine;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 use cmaes::*;
+use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 use swipy_engine::{Board, Config, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
 
@@ -20,6 +22,7 @@ fn main() {
             println!("Final Score: {}", board.score());
         }
         "bench" => {
+            // Parse arguments
             let subcommand_matches = matches.subcommand_matches("bench").unwrap();
             let num_games = subcommand_matches
                 .value_of("N")
@@ -27,15 +30,23 @@ fn main() {
                 .parse::<u64>()
                 .expect("number");
 
+            let init_engine_bar = ProgressBar::new(1);
+            init_engine_bar.set_message("[1/2] Initializing precomputed tables");
+            init_engine_bar.set_style(ProgressStyle::default_spinner().template("{msg} {spinner}"));
+
+            // Init engine
             let mut scores = Vec::with_capacity(num_games as usize);
             let mut tiles_reached = [0u64; 16];
             let mut engine = Engine::new(OPTIMIZED_CONFIG);
+            init_engine_bar.finish();
 
-            for i in 0..num_games {
-                if i % 5 == 0 && i != 0 {
-                    println!("{}/{}", i, num_games);
-                }
+            let play_games_bar = ProgressBar::new(num_games);
+            play_games_bar.set_message("[2/2] Playing games");
+            play_games_bar
+                .set_style(ProgressStyle::default_bar().template("{msg} {wide_bar} {eta}"));
+            play_games_bar.tick();
 
+            for _ in 0..num_games {
                 let board = play_random_game(&mut engine, false);
 
                 scores.push(board.score());
@@ -43,6 +54,8 @@ fn main() {
                 for i in 0..board.highest_tile() {
                     tiles_reached[i as usize] += 1;
                 }
+
+                play_games_bar.inc(1);
             }
 
             let avg = mean(scores.as_slice());
@@ -50,6 +63,9 @@ fn main() {
             let err = standard_error_mean(sd, scores.len() as f32, None);
             let lower_bound = avg - 1.96 * err;
             let upper_bound = avg + 1.96 * err;
+
+            play_games_bar.finish();
+            println!();
 
             println!("{} games played.", num_games);
             println!("Average score: {:.0} \u{00b1} {:.0}", avg, err);
