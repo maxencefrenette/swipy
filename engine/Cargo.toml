@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["Maxence Frenette <maxence.frenette@gmail.com>"]
 
 [dependencies]
+fnv = "1.0.6"
 lazy_static = "1.0.2"
 rand = "0.5.4"

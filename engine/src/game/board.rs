@@ -68,7 +68,7 @@ lazy_static! {
     static ref DOWN_MOVES: &'static LookupTable<u64> = &MOVES.3;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board(u64);
 
 impl Board {

@@ -56,6 +56,7 @@ fn main() {
                 }
 
                 play_games_bar.inc(1);
+                engine.reset();
             }
 
             let avg = mean(scores.as_slice());

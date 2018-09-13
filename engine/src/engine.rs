@@ -2,13 +2,14 @@ use config::Config;
 use game::{Board, Direction, TileSpawn};
 use lookup_table::LookupTable;
 use std::iter::Iterator;
+use transposition_table::{PositionEval, TranspositionTable};
 
 // ln(0.1) / ln(0.9)
 const DEPTH_PENALTY_4: f32 = 21.85434532678;
 
 pub struct Engine {
-    config: Config,
     eval_table: LookupTable<f32>,
+    transposition_table: TranspositionTable,
 }
 
 impl Engine {
@@ -24,7 +25,12 @@ impl Engine {
             eval
         });
 
-        Engine { config, eval_table }
+        let transposition_table = TranspositionTable::new(0x1000);
+
+        Engine {
+            eval_table,
+            transposition_table,
+        }
     }
 
     pub fn search(&mut self, board: Board, depth: f32) -> Direction {
@@ -40,10 +46,22 @@ impl Engine {
             .0
     }
 
-    /// Searches the given board ang finds the best move
+    /// Searches the given board and finds the best move
     fn expectimax_moves(&mut self, board: Board, depth: f32) -> f32 {
+        if depth >= 2.0 {
+            match self.transposition_table.get(board) {
+                Some(eval) if eval.depth >= depth => {
+                    return eval.score;
+                }
+                _ => (),
+            }
+        }
+
         if depth < 1. {
-            return self.static_eval(board);
+            let score = self.static_eval(board);
+            self.transposition_table
+                .set(board, PositionEval::new(depth, score));
+            return score;
         }
 
         let moves = board.gen_moves();
@@ -51,10 +69,13 @@ impl Engine {
             return board.score();
         }
 
-        moves
+        let score = moves
             .iter()
             .map(|(_, board)| self.expectimax_spawn_tile(*board, depth))
-            .fold(0., |acc, value| if value > acc { value } else { acc })
+            .fold(0., |acc, value| if value > acc { value } else { acc });
+        self.transposition_table
+            .set(board, PositionEval::new(depth, score));
+        score
     }
 
     fn expectimax_spawn_tile(&mut self, board: Board, depth: f32) -> f32 {
@@ -86,5 +107,10 @@ impl Engine {
         }
 
         eval
+    }
+
+    /// Resets the state of the engine as if it was new
+    pub fn reset(&mut self) {
+        self.transposition_table.clear();
     }
 }
