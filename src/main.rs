@@ -11,6 +11,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 use swipy_engine::{Board, Config, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
 
+const DEPTH: u8 = 2;
+
 fn main() {
     let app = init_clap();
     let matches = app.get_matches();
@@ -18,7 +20,7 @@ fn main() {
     match matches.subcommand_name().unwrap() {
         "play" => {
             let mut engine = Engine::new(OPTIMIZED_CONFIG);
-            let board = play_random_game(&mut engine, true);
+            let board = play_random_game(&mut engine, DEPTH, true);
             println!("Final Score: {}", board.score());
         }
         "bench" => {
@@ -47,7 +49,7 @@ fn main() {
             play_games_bar.tick();
 
             for _ in 0..num_games {
-                let board = play_random_game(&mut engine, false);
+                let board = play_random_game(&mut engine, DEPTH, false);
 
                 scores.push(board.score());
 
@@ -134,7 +136,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .subcommands(vec![play, bench, train])
 }
 
-fn play_random_game(engine: &mut Engine, verbose: bool) -> Board {
+fn play_random_game(engine: &mut Engine, depth: u8, verbose: bool) -> Board {
     let mut board = Board::new();
 
     if verbose {
@@ -143,7 +145,7 @@ fn play_random_game(engine: &mut Engine, verbose: bool) -> Board {
     }
 
     while !board.is_dead() {
-        let mov = engine.search(board, 2.);
+        let mov = engine.search(board, depth);
         board = board.make_move(&mov);
 
         if verbose {
@@ -167,7 +169,7 @@ impl FitnessFunction for FitnessEvaluator {
         let mut score: f64 = 0.;
 
         for _ in 0..batch_size {
-            let board = play_random_game(&mut engine, false);
+            let board = play_random_game(&mut engine, DEPTH, false);
             score += board.score() as f64;
         }
         score /= batch_size as f64;

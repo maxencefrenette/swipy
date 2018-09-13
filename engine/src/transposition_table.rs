@@ -6,12 +6,12 @@ use std::iter::repeat;
 /// The result of a single position evaluation at a certain depth
 #[derive(Debug, Clone, Copy)]
 pub struct PositionEval {
-    pub depth: f32,
+    pub depth: u8,
     pub score: f32,
 }
 
 impl PositionEval {
-    pub fn new(depth: f32, score: f32) -> PositionEval {
+    pub fn new(depth: u8, score: f32) -> PositionEval {
         PositionEval { depth, score }
     }
 }
