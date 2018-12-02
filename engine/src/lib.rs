@@ -7,8 +7,10 @@ mod config;
 mod engine;
 mod game;
 mod lookup_table;
+mod training;
 mod transposition_table;
 
 pub use config::*;
 pub use engine::*;
 pub use game::*;
+pub use training::*;

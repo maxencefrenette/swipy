@@ -1,15 +1,13 @@
 #[macro_use]
 extern crate clap;
-extern crate cmaes;
 extern crate indicatif;
 extern crate statistical;
 extern crate swipy_engine;
 
 use clap::{App, AppSettings, Arg, SubCommand};
-use cmaes::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
-use swipy_engine::{Board, Config, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
+use swipy_engine::{train_td, Board, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
 
 const DEPTH: u8 = 2;
 
@@ -120,8 +118,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("zero")
                 .short("z")
                 .help("starts training from scratch"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("N")
                 .help("The amount of batches of 5 games to play")
                 .required(true)
@@ -157,59 +154,15 @@ fn play_random_game(engine: &mut Engine, depth: u8, verbose: bool) -> Board {
     board
 }
 
-#[derive(Clone)]
-struct FitnessEvaluator;
-
-impl FitnessFunction for FitnessEvaluator {
-    fn get_fitness(&self, parameters: &[f64]) -> f64 {
-        let batch_size = 10;
-        let config = Config::from_vec(parameters.iter().map(|p| (*p as f32)).collect());
-        let mut engine = Engine::new(config);
-
-        let mut score: f64 = 0.;
-
-        for _ in 0..batch_size {
-            let board = play_random_game(&mut engine, DEPTH, false);
-            score += board.score() as f64;
-        }
-        score /= batch_size as f64;
-
-        println!("Score: {:05.0}", score);
-
-        -score
-    }
-}
-
 fn train(num_batches: u64, zero: bool) {
+    let alpha: f32 = 0.0005;
+
     let config = match zero {
         true => DEFAULT_CONFIG,
         false => OPTIMIZED_CONFIG,
     };
 
-    let options = CMAESOptions::custom(Config::dimensions())
-        .threads(1)
-        .initial_mean(
-            config
-                .to_vec()
-                .iter()
-                .map(|p| (*p as f64))
-                .collect(),
-        )
-        .initial_standard_deviations(
-            config
-                .to_vec()
-                .iter()
-                .map(|p| (*p * 0.05 + 1.) as f64)
-                .collect(),
-        )
-        .initial_step_size(10.)
-        // .stable_generations(250., 50)
-        .max_evaluations(num_batches as usize);
+    let new_config = train_td(&mut config.clone(), &num_batches, &alpha);
 
-    let solution = cmaes_loop(&FitnessEvaluator, options).unwrap();
-    let new_config = Config::from_vec(solution.0.iter().map(|p| (*p as f32)).collect());
-    let avg_score = -solution.1;
-
-    println!("New average score: {}", avg_score);
     println!("{:?}", new_config);
 }
