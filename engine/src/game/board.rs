@@ -28,6 +28,13 @@ impl TileSpawn {
             TileSpawn::Four => 0.1,
         }
     }
+
+    pub fn relative_prob(&self) -> u32 {
+        match self {
+            TileSpawn::Two => 9,
+            TileSpawn::Four => 1,
+        }
+    }
 }
 
 lazy_static! {
@@ -188,7 +195,7 @@ impl Board {
         let tile_spawns: Vec<(u32, Board)> = self
             .gen_tile_spawns()
             .into_iter()
-            .map(|(_prob, tile, board)| ((1000000. * tile.prob()) as u32, board))
+            .map(|(_prob, tile, board)| (tile.relative_prob(), board))
             .collect();
 
         let probabilities: Vec<u32> = tile_spawns.iter().map(|tile_spawn| tile_spawn.0).collect();
