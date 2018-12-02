@@ -1,7 +1,7 @@
 use super::row::Row;
 use lookup_table::LookupTable;
 use rand::{
-    distributions::{Distribution, Weighted, WeightedChoice},
+    distributions::{Distribution, WeightedIndex},
     thread_rng,
 };
 use std::fmt;
@@ -185,17 +185,17 @@ impl Board {
 
     fn spawn_random_tile(&self) -> Board {
         let mut rng = thread_rng();
-        let mut items: Vec<Weighted<Board>> = self
+        let tile_spawns: Vec<(u32, Board)> = self
             .gen_tile_spawns()
             .into_iter()
-            .map(|(_prob, tile, board)| Weighted {
-                weight: (1000000. * tile.prob()) as u32,
-                item: board,
-            })
+            .map(|(_prob, tile, board)| ((1000000. * tile.prob()) as u32, board))
             .collect();
-        let wc = WeightedChoice::new(&mut items);
 
-        wc.sample(&mut rng)
+        let probabilities: Vec<u32> = tile_spawns.iter().map(|tile_spawn| tile_spawn.0).collect();
+        let resulting_boards: Vec<Board> =
+            tile_spawns.iter().map(|tile_spawn| tile_spawn.1).collect();
+
+        resulting_boards[WeightedIndex::new(probabilities).unwrap().sample(&mut rng)]
     }
 
     pub fn gen_tile_spawns(&self) -> Vec<(f32, TileSpawn, Board)> {
