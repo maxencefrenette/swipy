@@ -12,6 +12,7 @@ pub fn train_td(initial_params: &mut Config, num_batches: &u64, alpha: &f32) -> 
             let chosen_move = engine.search(board, 1);
             let new_board = board.make_move(&chosen_move);
 
+            let r = new_board.score() - board.score();
             let old_eval = engine.static_eval(board);
             let new_eval = if new_board.is_dead() {
                 new_board.score()
@@ -19,7 +20,7 @@ pub fn train_td(initial_params: &mut Config, num_batches: &u64, alpha: &f32) -> 
                 engine.static_eval(new_board)
             };
 
-            let delta = alpha * (new_eval - old_eval);
+            let delta = alpha * (r + new_eval - old_eval);
 
             engine.learn(&board, &delta);
 
