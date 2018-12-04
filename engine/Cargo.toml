@@ -7,3 +7,10 @@ authors = ["Maxence Frenette <maxence.frenette@gmail.com>"]
 fnv = "1.0.6"
 lazy_static = "1.0.2"
 rand = "0.6"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "move_gen"
+harness = false
