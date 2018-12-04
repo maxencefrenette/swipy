@@ -7,6 +7,7 @@ extern crate swipy_engine;
 use clap::{App, AppSettings, Arg, SubCommand};
 use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
+use std::str::FromStr;
 use swipy_engine::{train_td, Board, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
 
 const DEPTH: u8 = 2;
@@ -94,8 +95,9 @@ fn main() {
                 .expect("number");
 
             let zero = subcommand_matches.is_present("zero");
+            let alpha = f32::from_str(subcommand_matches.value_of("alpha").unwrap()).unwrap();
 
-            train(num_batches, zero);
+            train(num_batches, alpha, zero);
         }
         _ => unreachable!(),
     }
@@ -117,7 +119,14 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .arg(
             Arg::with_name("zero")
                 .short("z")
-                .help("starts training from scratch"),
+                .help("Starts training from scratch"),
+        ).arg(
+            // TODO: Add a validator here
+            Arg::with_name("alpha")
+                .long("alpha")
+                .takes_value(true)
+                .default_value("0.0005")
+                .help("The learning rate"),
         ).arg(
             Arg::with_name("N")
                 .help("The amount of batches of 5 games to play")
@@ -154,9 +163,7 @@ fn play_random_game(engine: &mut Engine, depth: u8, verbose: bool) -> Board {
     board
 }
 
-fn train(num_batches: u64, zero: bool) {
-    let alpha: f32 = 0.0005;
-
+fn train(num_batches: u64, alpha: f32, zero: bool) {
     let config = match zero {
         true => DEFAULT_CONFIG,
         false => OPTIMIZED_CONFIG,
