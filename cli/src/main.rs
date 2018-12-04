@@ -23,7 +23,6 @@ fn main() {
             println!("Final Score: {}", board.score());
         }
         "bench" => {
-            // Parse arguments
             let subcommand_matches = matches.subcommand_matches("bench").unwrap();
             let num_games = subcommand_matches
                 .value_of("N")
@@ -31,60 +30,7 @@ fn main() {
                 .parse::<u64>()
                 .expect("number");
 
-            let init_engine_bar = ProgressBar::new(1);
-            init_engine_bar.set_message("[1/2] Initializing precomputed tables");
-            init_engine_bar.set_style(ProgressStyle::default_spinner().template("{msg} {spinner}"));
-
-            // Init engine
-            let mut scores = Vec::with_capacity(num_games as usize);
-            let mut tiles_reached = [0u64; 16];
-            let mut engine = Engine::new(OPTIMIZED_WEIGHTS);
-            init_engine_bar.finish();
-
-            let play_games_bar = ProgressBar::new(num_games);
-            play_games_bar.set_message("[2/2] Playing games");
-            play_games_bar
-                .set_style(ProgressStyle::default_bar().template("{msg} {wide_bar} {eta}"));
-            play_games_bar.tick();
-
-            for _ in 0..num_games {
-                let board = play_random_game(&mut engine, DEPTH, false);
-
-                scores.push(board.score());
-
-                for i in 0..board.highest_tile() {
-                    tiles_reached[i as usize] += 1;
-                }
-
-                play_games_bar.inc(1);
-                engine.reset();
-            }
-
-            let avg = mean(scores.as_slice());
-            let sd = standard_deviation(scores.as_slice(), Some(avg));
-            let err = standard_error_mean(sd, scores.len() as f32, None);
-            let lower_bound = avg - 1.96 * err;
-            let upper_bound = avg + 1.96 * err;
-
-            play_games_bar.finish();
-            println!();
-
-            println!("{} games played.", num_games);
-            println!("Average score: {:.0} \u{00b1} {:.0}", avg, err);
-            println!("Standard deviation: {:.0}", sd);
-            println!(
-                "Confidence interval (95%): [{:.0}, {:.0}]",
-                lower_bound, upper_bound
-            );
-            println!();
-
-            for n in 8..13 {
-                println!(
-                    "{}: {}%",
-                    u64::pow(2, n),
-                    (tiles_reached[n as usize] as f32) * 100. / (num_games as f32)
-                );
-            }
+            bench(num_games);
         }
         "train" => {
             let subcommand_matches = matches.subcommand_matches("train").unwrap();
@@ -161,6 +107,62 @@ fn play_random_game(engine: &mut Engine<Legacy>, depth: u8, verbose: bool) -> Bo
     }
 
     board
+}
+
+fn bench(num_games: u64) {
+    let init_engine_bar = ProgressBar::new(1);
+    init_engine_bar.set_message("[1/2] Initializing precomputed tables");
+    init_engine_bar.set_style(ProgressStyle::default_spinner().template("{msg} {spinner}"));
+
+    // Init engine
+    let mut scores = Vec::with_capacity(num_games as usize);
+    let mut tiles_reached = [0u64; 16];
+    let mut engine = Engine::new(OPTIMIZED_WEIGHTS);
+    init_engine_bar.finish();
+
+    let play_games_bar = ProgressBar::new(num_games);
+    play_games_bar.set_message("[2/2] Playing games");
+    play_games_bar.set_style(ProgressStyle::default_bar().template("{msg} {wide_bar} {eta}"));
+    play_games_bar.tick();
+
+    for _ in 0..num_games {
+        let board = play_random_game(&mut engine, DEPTH, false);
+
+        scores.push(board.score());
+
+        for i in 0..board.highest_tile() {
+            tiles_reached[i as usize] += 1;
+        }
+
+        play_games_bar.inc(1);
+        engine.reset();
+    }
+
+    let avg = mean(scores.as_slice());
+    let sd = standard_deviation(scores.as_slice(), Some(avg));
+    let err = standard_error_mean(sd, scores.len() as f32, None);
+    let lower_bound = avg - 1.96 * err;
+    let upper_bound = avg + 1.96 * err;
+
+    play_games_bar.finish();
+    println!();
+
+    println!("{} games played.", num_games);
+    println!("Average score: {:.0} \u{00b1} {:.0}", avg, err);
+    println!("Standard deviation: {:.0}", sd);
+    println!(
+        "Confidence interval (95%): [{:.0}, {:.0}]",
+        lower_bound, upper_bound
+    );
+    println!();
+
+    for n in 8..13 {
+        println!(
+            "{}: {}%",
+            u64::pow(2, n),
+            (tiles_reached[n as usize] as f32) * 100. / (num_games as f32)
+        );
+    }
 }
 
 fn train(num_batches: u64, alpha: f32, zero: bool) {
