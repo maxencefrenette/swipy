@@ -1,4 +1,4 @@
-use super::VFunction;
+use super::{VFunction, Weights};
 use game::Board;
 
 #[derive(Debug, Clone, Default)]
@@ -7,16 +7,20 @@ pub struct LegacyWeights {
     pub inner_pos_bonus: [f32; 16],
 }
 
-pub const OPTIMIZED_WEIGHTS: LegacyWeights = LegacyWeights {
-    outer_pos_bonus: [
-        187.51797, 146.52249, 118.49475, 57.08678, 19.882929, 33.229523, -6.8986917, -130.95418,
-        -349.45972, -388.40686, -0.4167655, 0.0, 0.0, 0.0, 0.0, 0.0,
-    ],
-    inner_pos_bonus: [
-        162.26865, 136.7995, 109.440506, 94.70556, 73.923134, 41.334373, -11.293593, -140.11522,
-        -363.43854, -411.76, -5.027099, 0.0, 0.0, 0.0, 0.0, 0.0,
-    ],
-};
+impl Weights for LegacyWeights {
+    fn optimized() -> LegacyWeights {
+        LegacyWeights {
+            outer_pos_bonus: [
+                187.51797, 146.52249, 118.49475, 57.08678, 19.882929, 33.229523, -6.8986917,
+                -130.95418, -349.45972, -388.40686, -0.4167655, 0.0, 0.0, 0.0, 0.0, 0.0,
+            ],
+            inner_pos_bonus: [
+                162.26865, 136.7995, 109.440506, 94.70556, 73.923134, 41.334373, -11.293593,
+                -140.11522, -363.43854, -411.76, -5.027099, 0.0, 0.0, 0.0, 0.0, 0.0,
+            ],
+        }
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct Legacy {

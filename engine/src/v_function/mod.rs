@@ -1,11 +1,18 @@
 use game::Board;
+use std::fmt::Debug;
 
 mod legacy;
+mod n_tuple_small;
 
 pub use self::legacy::*;
+pub use self::n_tuple_small::*;
+
+pub trait Weights {
+    fn optimized() -> Self;
+}
 
 pub trait VFunction {
-    type Weights: Clone;
+    type Weights: Weights + Debug + Clone + Default;
     fn new(weights: Self::Weights) -> Self;
     fn eval(&self, state: &Board) -> f32;
     fn learn(&mut self, state: &Board, delta: &f32);

@@ -8,9 +8,8 @@ mod game;
 mod lookup_table;
 mod training;
 mod transposition_table;
-mod v_function;
+pub mod v_function;
 
 pub use engine::*;
 pub use game::*;
 pub use training::*;
-pub use v_function::*;
