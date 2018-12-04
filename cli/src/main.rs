@@ -8,7 +8,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 use std::str::FromStr;
-use swipy_engine::{train_td, Board, Engine, DEFAULT_CONFIG, OPTIMIZED_CONFIG};
+use swipy_engine::{train_td, Board, Engine, Legacy, LegacyWeights, OPTIMIZED_WEIGHTS};
 
 const DEPTH: u8 = 2;
 
@@ -18,7 +18,7 @@ fn main() {
 
     match matches.subcommand_name().unwrap() {
         "play" => {
-            let mut engine = Engine::new(OPTIMIZED_CONFIG);
+            let mut engine = Engine::new(OPTIMIZED_WEIGHTS);
             let board = play_random_game(&mut engine, DEPTH, true);
             println!("Final Score: {}", board.score());
         }
@@ -38,7 +38,7 @@ fn main() {
             // Init engine
             let mut scores = Vec::with_capacity(num_games as usize);
             let mut tiles_reached = [0u64; 16];
-            let mut engine = Engine::new(OPTIMIZED_CONFIG);
+            let mut engine = Engine::new(OPTIMIZED_WEIGHTS);
             init_engine_bar.finish();
 
             let play_games_bar = ProgressBar::new(num_games);
@@ -142,7 +142,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .subcommands(vec![play, bench, train])
 }
 
-fn play_random_game(engine: &mut Engine, depth: u8, verbose: bool) -> Board {
+fn play_random_game(engine: &mut Engine<Legacy>, depth: u8, verbose: bool) -> Board {
     let mut board = Board::new();
 
     if verbose {
@@ -164,12 +164,12 @@ fn play_random_game(engine: &mut Engine, depth: u8, verbose: bool) -> Board {
 }
 
 fn train(num_batches: u64, alpha: f32, zero: bool) {
-    let config = match zero {
-        true => DEFAULT_CONFIG,
-        false => OPTIMIZED_CONFIG,
+    let weights = match zero {
+        true => LegacyWeights::default(),
+        false => OPTIMIZED_WEIGHTS,
     };
 
-    let new_config = train_td(&mut config.clone(), &num_batches, &alpha);
+    let new_weights = train_td::<Legacy>(weights.clone(), &num_batches, &alpha);
 
-    println!("{:?}", new_config);
+    println!("{:?}", new_weights);
 }

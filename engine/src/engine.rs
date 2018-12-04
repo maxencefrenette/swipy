@@ -1,23 +1,29 @@
-use config::Config;
 use game::{Board, Direction, TileSpawn};
 use std::iter::Iterator;
 use transposition_table::{PositionEval, TranspositionTable};
+use v_function::VFunction;
 
 /// The search depth counter increase when processing a move where a 4 spawns.
 /// This is approximately equal to ln(0.1) / ln(0.9) = 21.85434532678.
 const DEPTH_PENALTY_4: u8 = 22;
 
-pub struct Engine {
-    config: Config,
+pub struct Engine<F>
+where
+    F: VFunction,
+{
+    v_function: F,
     transposition_table: TranspositionTable,
 }
 
-impl Engine {
-    pub fn new(config: Config) -> Engine {
+impl<F> Engine<F>
+where
+    F: VFunction,
+{
+    pub fn new(weights: F::Weights) -> Self {
         let transposition_table = TranspositionTable::new(0x1000);
 
         Engine {
-            config,
+            v_function: F::new(weights),
             transposition_table,
         }
     }
@@ -82,53 +88,20 @@ impl Engine {
 
     /// Statically evaluates the given position by evaluating the expected score
     pub fn static_eval(&self, position: Board) -> f32 {
-        let mut eval = 0.;
+        self.v_function.eval(&position)
+    }
 
-        for i in 0..4 {
-            let row = position.row_at(i);
-            let column = position.column_at(i);
+    pub fn learn(&mut self, position: &Board, delta: &f32) {
+        self.v_function.learn(position, delta)
+    }
 
-            eval += row.score() / 2.;
-            eval += column.score() / 2.;
-
-            eval += self.config.outer_pos_bonus[row.tile_at(0) as usize];
-            eval += self.config.inner_pos_bonus[row.tile_at(1) as usize];
-            eval += self.config.inner_pos_bonus[row.tile_at(2) as usize];
-            eval += self.config.outer_pos_bonus[row.tile_at(3) as usize];
-            eval += self.config.outer_pos_bonus[column.tile_at(0) as usize];
-            eval += self.config.inner_pos_bonus[column.tile_at(1) as usize];
-            eval += self.config.inner_pos_bonus[column.tile_at(2) as usize];
-            eval += self.config.outer_pos_bonus[column.tile_at(3) as usize];
-        }
-
-        eval
+    /// Destroys the engine and returns the config
+    pub fn into_weights(self) -> F::Weights {
+        self.v_function.into_weights()
     }
 
     /// Resets the state of the engine as if it was new
     pub fn reset(&mut self) {
         self.transposition_table.clear();
-    }
-
-    pub fn learn(&mut self, position: &Board, delta: &f32) {
-        let adjusted_delta = delta / 8.;
-
-        for i in 0..4 {
-            let row = position.row_at(i);
-            self.config.outer_pos_bonus[row.tile_at(0) as usize] += adjusted_delta;
-            self.config.inner_pos_bonus[row.tile_at(1) as usize] += adjusted_delta;
-            self.config.inner_pos_bonus[row.tile_at(2) as usize] += adjusted_delta;
-            self.config.outer_pos_bonus[row.tile_at(3) as usize] += adjusted_delta;
-
-            let column = position.column_at(i);
-            self.config.outer_pos_bonus[column.tile_at(0) as usize] += adjusted_delta;
-            self.config.inner_pos_bonus[column.tile_at(1) as usize] += adjusted_delta;
-            self.config.inner_pos_bonus[column.tile_at(2) as usize] += adjusted_delta;
-            self.config.outer_pos_bonus[column.tile_at(3) as usize] += adjusted_delta;
-        }
-    }
-
-    /// Destroys the engine and returns the config
-    pub fn into_config(self) -> Config {
-        self.config
     }
 }

@@ -3,14 +3,14 @@ extern crate lazy_static;
 extern crate fnv;
 extern crate rand;
 
-mod config;
 mod engine;
 mod game;
 mod lookup_table;
 mod training;
 mod transposition_table;
+mod v_function;
 
-pub use config::*;
 pub use engine::*;
 pub use game::*;
 pub use training::*;
+pub use v_function::*;

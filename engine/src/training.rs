@@ -1,9 +1,12 @@
-use config::Config;
 use engine::Engine;
 use game::Board;
+use v_function::VFunction;
 
-pub fn train_td(initial_params: &mut Config, num_batches: &u64, alpha: &f32) -> Config {
-    let mut engine = Engine::new(initial_params.clone());
+pub fn train_td<F>(weights: F::Weights, num_batches: &u64, alpha: &f32) -> F::Weights
+where
+    F: VFunction,
+{
+    let mut engine = Engine::<F>::new(weights);
 
     for i in 0..*num_batches {
         let mut board = Board::new();
@@ -30,5 +33,5 @@ pub fn train_td(initial_params: &mut Config, num_batches: &u64, alpha: &f32) -> 
         println!("Game {}, Score: {}", i, board.score());
     }
 
-    engine.into_config()
+    engine.into_weights()
 }
