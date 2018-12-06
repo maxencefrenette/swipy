@@ -1,7 +1,13 @@
 use super::{VFunction, Weights};
 use game::Board;
 
-#[derive(Debug, Clone, Default)]
+lazy_static! {
+    static ref OPTIMIZED: LegacyWeights =
+        serde_json::from_slice(include_bytes!("../../../networks/legacy.json"))
+            .expect("valid legacy weights");
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct LegacyWeights {
     pub outer_pos_bonus: [f32; 16],
     pub inner_pos_bonus: [f32; 16],
@@ -9,16 +15,7 @@ pub struct LegacyWeights {
 
 impl Weights for LegacyWeights {
     fn optimized() -> LegacyWeights {
-        LegacyWeights {
-            outer_pos_bonus: [
-                108.54316, 53.69378, 59.764202, 51.69314, 58.505787, 53.682144, 7.3442073,
-                -71.988304, -198.15659, -298.21445, -20.902882, 0.0, 0.0, 0.0, 0.0, 0.0,
-            ],
-            inner_pos_bonus: [
-                125.3738, 106.51863, 115.91801, 106.5212, 83.4218, 44.721077, -8.361226,
-                -114.07304, -277.46603, -345.0825, -33.7291, 0.0, 0.0, 0.0, 0.0, 0.0,
-            ],
-        }
+        OPTIMIZED.clone()
     }
 }
 

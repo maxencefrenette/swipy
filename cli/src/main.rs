@@ -1,14 +1,16 @@
 #[macro_use]
 extern crate clap;
 extern crate indicatif;
+extern crate serde_json;
 extern crate statistical;
 extern crate swipy_engine;
 
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+mod cli_helpers;
+
+use clap::{App, AppSettings, Arg, SubCommand};
+use cli_helpers::{parse_arg, OutputFormat, VFunctionChoice};
 use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
-use std::fmt::Debug;
-use std::str::FromStr;
 use swipy_engine::{
     train_td,
     v_function::{Legacy, LegacyWeights, NTupleSmall, NTupleSmallWeights, VFunction, Weights},
@@ -23,7 +25,15 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .long("v_function")
         .takes_value(true)
         .default_value("legacy")
+        .possible_values(VFunctionChoice::possible_values())
         .help("The V-function that will be trained and used");
+
+    let format = Arg::with_name("format")
+        .long("format")
+        .takes_value(true)
+        .default_value("human")
+        .possible_values(OutputFormat::possible_values())
+        .help("The format of the output");
 
     let play = SubCommand::with_name("play")
         .about("plays one game, logging the board to the command line")
@@ -68,7 +78,8 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .help("The amount of batches of 5 games to play")
                 .required(true)
                 .takes_value(true),
-        ).arg(&v_function);
+        ).arg(&v_function)
+        .arg(&format);
 
     App::new("Swipy - 2048 AI")
         .author(crate_authors!(", "))
@@ -86,38 +97,36 @@ fn main() {
         "play" => {
             let subcommand_matches = matches.subcommand_matches("play").unwrap();
             let depth = parse_arg::<u8>(subcommand_matches, "depth");
-            let v_function = get_arg(subcommand_matches, "v_function");
+            let v_function = parse_arg::<VFunctionChoice>(subcommand_matches, "v_function");
 
             match v_function {
-                "legacy" => play(
+                VFunctionChoice::Legacy => play(
                     &mut Engine::<Legacy>::new(LegacyWeights::optimized()),
                     depth,
                 ),
-                "n_tuple_small" => play(
+                VFunctionChoice::NTupleSmall => play(
                     &mut Engine::<NTupleSmall>::new(NTupleSmallWeights::optimized()),
                     depth,
                 ),
-                _ => unreachable!(),
             };
         }
         "bench" => {
             let subcommand_matches = matches.subcommand_matches("bench").unwrap();
             let num_games = parse_arg::<u64>(subcommand_matches, "N");
             let depth = parse_arg::<u8>(subcommand_matches, "depth");
-            let v_function = get_arg(subcommand_matches, "v_function");
+            let v_function = parse_arg::<VFunctionChoice>(subcommand_matches, "v_function");
 
             match v_function {
-                "legacy" => bench(
+                VFunctionChoice::Legacy => bench(
                     &mut Engine::<Legacy>::new(LegacyWeights::optimized()),
                     num_games,
                     depth,
                 ),
-                "n_tuple_small" => bench(
+                VFunctionChoice::NTupleSmall => bench(
                     &mut Engine::<NTupleSmall>::new(NTupleSmallWeights::optimized()),
                     num_games,
                     depth,
                 ),
-                _ => unreachable!(),
             };
         }
         "train" => {
@@ -125,28 +134,18 @@ fn main() {
             let num_batches = parse_arg::<u64>(subcommand_matches, "N");
             let zero = subcommand_matches.is_present("zero");
             let alpha = parse_arg::<f32>(subcommand_matches, "alpha");
-            let v_function = get_arg(subcommand_matches, "v_function");
+            let v_function = parse_arg::<VFunctionChoice>(subcommand_matches, "v_function");
+            let format = parse_arg::<OutputFormat>(subcommand_matches, "format");
 
             match v_function {
-                "legacy" => train::<Legacy>(num_batches, alpha, zero),
-                "n_tuple_small" => train::<NTupleSmall>(num_batches, alpha, zero),
-                _ => unreachable!(),
+                VFunctionChoice::Legacy => train::<Legacy>(num_batches, alpha, zero, format),
+                VFunctionChoice::NTupleSmall => {
+                    train::<NTupleSmall>(num_batches, alpha, zero, format)
+                }
             };
         }
         _ => unreachable!(),
     }
-}
-
-fn parse_arg<T>(matches: &ArgMatches, name: &str) -> T
-where
-    T: FromStr,
-    <T as std::str::FromStr>::Err: Debug,
-{
-    matches.value_of(name).unwrap().parse::<T>().unwrap()
-}
-
-fn get_arg<'a>(matches: &'a ArgMatches, name: &str) -> &'a str {
-    matches.value_of(name).unwrap()
 }
 
 fn play_random_game(engine: &mut Engine<impl VFunction>, depth: u8, verbose: bool) -> Board {
@@ -225,7 +224,7 @@ fn bench(engine: &mut Engine<impl VFunction>, num_games: u64, depth: u8) {
     }
 }
 
-fn train<F>(num_batches: u64, alpha: f32, zero: bool)
+fn train<F>(num_batches: u64, alpha: f32, zero: bool, format: OutputFormat)
 where
     F: VFunction,
 {
@@ -234,7 +233,19 @@ where
         false => F::Weights::optimized(),
     };
 
-    let new_weights = train_td::<F>(weights.clone(), &num_batches, &alpha);
+    let mut engine = Engine::<F>::new(weights);
 
-    println!("{:?}", new_weights);
+    train_td(&mut engine, &num_batches, &alpha, |progress| match format {
+        OutputFormat::Human => {
+            println!("Game {}, Average Score: {}", progress.game, progress.score)
+        }
+        OutputFormat::Json => println!("{}", serde_json::to_string(&progress).unwrap()),
+    });
+
+    let new_weights = engine.into_weights();
+
+    match format {
+        OutputFormat::Human => println!("{:?}", new_weights),
+        OutputFormat::Json => println!("{}", serde_json::to_string(&new_weights).unwrap()),
+    };
 }

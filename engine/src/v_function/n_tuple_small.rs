@@ -1,7 +1,13 @@
 use super::{VFunction, Weights};
 use game::Board;
 
-#[derive(Debug, Clone, Default)]
+lazy_static! {
+    static ref OPTIMIZED: NTupleSmallWeights =
+        serde_json::from_slice(include_bytes!("../../../networks/n_tuple_small.json"))
+            .expect("valid legacy weights");
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct NTupleSmallWeights {
     pub corner: [f32; 16],
     pub edge: [f32; 16],
@@ -10,20 +16,7 @@ pub struct NTupleSmallWeights {
 
 impl Weights for NTupleSmallWeights {
     fn optimized() -> NTupleSmallWeights {
-        NTupleSmallWeights {
-            corner: [
-                191.37343, 78.2322, 54.284393, 3.0459914, -44.783875, -25.07536, 18.911865,
-                20.963875, -31.210142, -4.3872957, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            ],
-            edge: [
-                162.0052, 113.46235, 89.72123, 38.008884, -9.765412, 11.449189, 55.578365,
-                57.867737, 6.692998, -2.3696995, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            ],
-            center: [
-                -29.262695, 35.25711, 35.45671, 34.975533, 35.016354, 36.523926, 36.665627,
-                36.90312, 37.903225, 2.0175886, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            ],
-        }
+        OPTIMIZED.clone()
     }
 }
 

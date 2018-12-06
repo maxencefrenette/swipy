@@ -2,11 +2,17 @@ use engine::Engine;
 use game::Board;
 use v_function::VFunction;
 
-pub fn train_td<F>(weights: F::Weights, num_batches: &u64, alpha: &f32) -> F::Weights
-where
-    F: VFunction,
+const REPORTING_INTERVAL: u64 = 1000;
+
+pub fn train_td<F>(
+    engine: &mut Engine<impl VFunction>,
+    num_batches: &u64,
+    alpha: &f32,
+    on_progress: F,
+) where
+    F: Fn(TrainingProgress) -> (),
 {
-    let mut engine = Engine::<F>::new(weights);
+    let mut score_acc: f32 = 0.;
 
     for i in 0..*num_batches {
         let mut state = Board::new();
@@ -33,17 +39,29 @@ where
 
             let delta = alpha * (r + next_eval - eval);
 
-            if delta < -5. {
-                println!("{} {} {} {}", r, next_eval, eval, delta);
-            }
-
             engine.learn(&state, &delta);
 
             state = next_state;
         }
 
-        println!("Game {}, Score: {}", i, state.score());
-    }
+        score_acc += state.score();
 
-    engine.into_weights()
+        if i % REPORTING_INTERVAL == 0 {
+            let avg_score = score_acc / (REPORTING_INTERVAL as f32);
+            on_progress(TrainingProgress::new(i, avg_score));
+            score_acc = 0.;
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TrainingProgress {
+    pub game: u64,
+    pub score: f32,
+}
+
+impl TrainingProgress {
+    fn new(game: u64, score: f32) -> TrainingProgress {
+        TrainingProgress { game, score }
+    }
 }
