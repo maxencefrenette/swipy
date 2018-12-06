@@ -9,28 +9,40 @@ where
     let mut engine = Engine::<F>::new(weights);
 
     for i in 0..*num_batches {
-        let mut board = Board::new();
+        let mut state = Board::new();
 
-        while !board.is_dead() {
-            let chosen_move = engine.search(board, 1);
-            let new_board = board.make_move(&chosen_move);
+        while !state.is_dead() {
+            // Afterstate learning algorithm from Szubert and Jaśkowski
+            let action = engine.search(state, 1);
+            let afterstate = state.move_candidate(&action);
+            let next_state = state.make_move(&action);
 
-            let r = new_board.score() - board.score();
-            let old_eval = engine.static_eval(board);
-            let new_eval = if new_board.is_dead() {
-                new_board.score()
-            } else {
-                engine.static_eval(new_board)
-            };
+            let eval = engine.static_eval(afterstate);
 
-            let delta = alpha * (r + new_eval - old_eval);
+            if next_state.is_dead() {
+                let delta = alpha * -eval;
+                engine.learn(&state, &delta);
+                break;
+            }
 
-            engine.learn(&board, &delta);
+            let next_action = engine.search(next_state, 1);
+            let next_afterstate = next_state.move_candidate(&next_action);
 
-            board = new_board;
+            let r = next_afterstate.score() - afterstate.score();
+            let next_eval = engine.static_eval(next_afterstate);
+
+            let delta = alpha * (r + next_eval - eval);
+
+            if delta < -5. {
+                println!("{} {} {} {}", r, next_eval, eval, delta);
+            }
+
+            engine.learn(&state, &delta);
+
+            state = next_state;
         }
 
-        println!("Game {}, Score: {}", i, board.score());
+        println!("Game {}, Score: {}", i, state.score());
     }
 
     engine.into_weights()

@@ -11,7 +11,7 @@ pub trait Weights {
     fn optimized() -> Self;
 }
 
-pub trait VFunction {
+pub trait VFunction: Debug {
     type Weights: Weights + Debug + Clone + Default;
     fn new(weights: Self::Weights) -> Self;
     fn eval(&self, state: &Board) -> f32;

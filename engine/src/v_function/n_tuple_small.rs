@@ -12,44 +12,16 @@ impl Weights for NTupleSmallWeights {
     fn optimized() -> NTupleSmallWeights {
         NTupleSmallWeights {
             corner: [
-                295.7805,
-                202.71933,
-                145.28839,
-                5.6943674,
-                -128.8403,
-                -67.74326,
-                -14.902347,
-                -8.068005,
-                -6.1175094,
-                -0.27227518,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
+                191.37343, 78.2322, 54.284393, 3.0459914, -44.783875, -25.07536, 18.911865,
+                20.963875, -31.210142, -4.3872957, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             ],
             edge: [
-                322.1197,
-                253.4931,
-                196.10011,
-                56.489624,
-                -15.299292,
-                -7.852551,
-                26.219332,
-                16.572641,
-                0.18946102,
-                -0.058653127,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
+                162.0052, 113.46235, 89.72123, 38.008884, -9.765412, 11.449189, 55.578365,
+                57.867737, 6.692998, -2.3696995, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             ],
             center: [
-                24.940155, 51.352448, 51.60894, 50.790497, 113.53783, 59.896114, 41.12308,
-                24.640617, 6.306972, 0.21362203, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                -29.262695, 35.25711, 35.45671, 34.975533, 35.016354, 36.523926, 36.665627,
+                36.90312, 37.903225, 2.0175886, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
             ],
         }
     }
@@ -73,7 +45,6 @@ impl VFunction for NTupleSmall {
         for i in &[0, 3] {
             let row = state.row_at(*i);
 
-            eval += row.score();
             eval += self.weights.corner[row.tile_at(0) as usize];
             eval += self.weights.edge[row.tile_at(1) as usize];
             eval += self.weights.edge[row.tile_at(2) as usize];
@@ -83,7 +54,6 @@ impl VFunction for NTupleSmall {
         for i in &[1, 2] {
             let row = state.row_at(*i);
 
-            eval += row.score();
             eval += self.weights.edge[row.tile_at(0) as usize];
             eval += self.weights.center[row.tile_at(1) as usize];
             eval += self.weights.center[row.tile_at(2) as usize];

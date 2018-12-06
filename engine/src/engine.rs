@@ -28,19 +28,42 @@ where
         }
     }
 
+    /// Recursively searches for the best move to perform with the current game state
+    /// Uses afterstates as leaves to statically evaluate
     pub fn search(&mut self, board: Board, depth: u8) -> Direction {
         let moves = board.gen_moves();
 
         moves
             .into_iter()
-            .map(|(dir, board)| (dir, self.expectimax_spawn_tile(board, depth)))
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .unwrap()
+            .map(|(dir, board)| (dir, self.expectimax_spawn_tile(board, depth - 1)))
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).expect("values are not NAN"))
+            .expect("moves has elements")
             .0
     }
 
-    /// Searches the given board and finds the best move
-    fn expectimax_moves(&mut self, board: Board, depth: u8) -> f32 {
+    /// Evaluates the expected score of a position using expectimax.
+    ///
+    /// The `board` argument represents a state of the board between turns.
+    fn expectimax_move(&mut self, board: Board, depth: u8) -> f32 {
+        let moves = board.gen_moves();
+        if moves.len() == 0 {
+            return 0.;
+        }
+
+        moves
+            .iter()
+            .map(|(_, next_board)| {
+                self.expectimax_spawn_tile(*next_board, depth)
+                    + (next_board.score() - board.score())
+            }).max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap()
+    }
+
+    /// Evaluates the expected score of an afterstate using expectimax.
+    ///
+    /// The `board` argument represents an afterstate of the board, which is the state a board
+    /// takes after a move has been made, but before a random tile has appeared.
+    fn expectimax_spawn_tile(&mut self, board: Board, depth: u8) -> f32 {
         if depth >= 2 {
             match self.transposition_table.get(board) {
                 Some(eval) if eval.depth >= depth => {
@@ -51,30 +74,12 @@ where
         }
 
         if depth == 0 {
-            let score = self.static_eval(board);
-            self.transposition_table
-                .set(board, PositionEval::new(depth, score));
-            return score;
+            return self.static_eval(board);
         }
 
-        let moves = board.gen_moves();
-        if moves.len() == 0 {
-            return board.score();
-        }
-
-        let score = moves
-            .iter()
-            .map(|(_, board)| self.expectimax_spawn_tile(*board, depth))
-            .fold(0., |acc, value| if value > acc { value } else { acc });
-        self.transposition_table
-            .set(board, PositionEval::new(depth, score));
-        score
-    }
-
-    fn expectimax_spawn_tile(&mut self, board: Board, depth: u8) -> f32 {
         let moves = board.gen_tile_spawns();
 
-        moves
+        let score = moves
             .into_iter()
             .map(|(prob, tile, board)| {
                 let new_depth = match tile {
@@ -82,8 +87,13 @@ where
                     TileSpawn::Four => depth.saturating_sub(DEPTH_PENALTY_4),
                 };
 
-                (prob, self.expectimax_moves(board, new_depth))
-            }).fold(0., |acc, (prob, score)| acc + prob * score)
+                prob * self.expectimax_move(board, new_depth)
+            }).sum();
+
+        self.transposition_table
+            .set(board, PositionEval::new(depth, score));
+
+        score
     }
 
     /// Statically evaluates the given position by evaluating the expected score

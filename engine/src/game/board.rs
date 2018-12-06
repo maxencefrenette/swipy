@@ -151,7 +151,7 @@ impl Board {
         result
     }
 
-    fn move_candidate(&self, direction: &Direction) -> Board {
+    pub fn move_candidate(&self, direction: &Direction) -> Board {
         match direction {
             Direction::Left => {
                 let mut res = 0;
