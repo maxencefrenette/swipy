@@ -3,6 +3,9 @@ extern crate clap;
 extern crate indicatif;
 extern crate serde_json;
 extern crate statistical;
+extern crate strum;
+#[macro_use]
+extern crate strum_macros;
 extern crate swipy_engine;
 
 mod cli_helpers;
@@ -25,14 +28,14 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
         .long("v_function")
         .takes_value(true)
         .default_value("legacy")
-        .possible_values(VFunctionChoice::possible_values())
+        .possible_values(&VFunctionChoice::possible_values())
         .help("The V-function that will be trained and used");
 
     let format = Arg::with_name("format")
         .long("format")
         .takes_value(true)
         .default_value("human")
-        .possible_values(OutputFormat::possible_values())
+        .possible_values(&OutputFormat::possible_values())
         .help("The format of the output");
 
     let play = SubCommand::with_name("play")

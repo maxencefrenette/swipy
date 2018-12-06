@@ -10,22 +10,11 @@ where
     matches.value_of(name).unwrap().parse::<T>().unwrap()
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumString)]
+#[strum(serialize_all = "snake_case")]
 pub enum OutputFormat {
     Human,
     Json,
-}
-
-impl FromStr for OutputFormat {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "human" => Ok(OutputFormat::Human),
-            "json" => Ok(OutputFormat::Json),
-            _ => Err(()),
-        }
-    }
 }
 
 impl OutputFormat {
@@ -34,22 +23,11 @@ impl OutputFormat {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumString)]
+#[strum(serialize_all = "snake_case")]
 pub enum VFunctionChoice {
     Legacy,
     NTupleSmall,
-}
-
-impl FromStr for VFunctionChoice {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "legacy" => Ok(VFunctionChoice::Legacy),
-            "n_tuple_small" => Ok(VFunctionChoice::NTupleSmall),
-            _ => Err(()),
-        }
-    }
 }
 
 impl VFunctionChoice {
