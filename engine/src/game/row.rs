@@ -38,8 +38,7 @@ impl Row {
                 } else {
                     0.
                 }
-            })
-            .sum()
+            }).sum()
     }
 
     pub fn count_empties(&self) -> u64 {
