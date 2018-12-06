@@ -11,21 +11,20 @@ use std::fmt::Debug;
 use std::str::FromStr;
 use swipy_engine::{
     train_td,
-    v_function::{Legacy, VFunction, Weights},
+    v_function::{Legacy, LegacyWeights, NTupleSmall, NTupleSmallWeights, VFunction, Weights},
     Board, Engine,
 };
 
 const DEFAULT_DEPTH: &str = "3";
 const DEFAULT_LEARNING_RATE: &str = "0.0005";
 
-// To preserve the benefits of static dispatch, engine parameters are chosen at compile-time rather than at run-time.
-// Select the VFunction to use here
-type SelectedVFunction = Legacy;
-
-// This is adjusted automatically
-type SelectedEngine = Engine<SelectedVFunction>;
-
 fn init_clap<'a, 'b>() -> App<'a, 'b> {
+    let v_function = Arg::with_name("v_function")
+        .long("v_function")
+        .takes_value(true)
+        .default_value("legacy")
+        .help("The V-function that will be trained and used");
+
     let play = SubCommand::with_name("play")
         .about("plays one game, logging the board to the command line")
         .arg(
@@ -35,7 +34,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .default_value(DEFAULT_DEPTH)
                 .help("The expectimax search depth"),
-        );
+        ).arg(&v_function);
     let bench = SubCommand::with_name("bench")
         .about("plays N games to test the strength of the AI")
         .arg(
@@ -50,7 +49,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .default_value(DEFAULT_DEPTH)
                 .help("The expectimax search depth"),
-        );
+        ).arg(&v_function);
     let train = SubCommand::with_name("train")
         .about("continuously plays to optimize the AI")
         .arg(
@@ -69,7 +68,7 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .help("The amount of batches of 5 games to play")
                 .required(true)
                 .takes_value(true),
-        );
+        ).arg(&v_function);
 
     App::new("Swipy - 2048 AI")
         .author(crate_authors!(", "))
@@ -87,25 +86,52 @@ fn main() {
         "play" => {
             let subcommand_matches = matches.subcommand_matches("play").unwrap();
             let depth = parse_arg::<u8>(subcommand_matches, "depth");
+            let v_function = get_arg(subcommand_matches, "v_function");
 
-            let mut engine = SelectedEngine::new(Weights::optimized());
-            let board = play_random_game(&mut engine, depth, true);
-            println!("Final Score: {}", board.score());
+            match v_function {
+                "legacy" => play(
+                    &mut Engine::<Legacy>::new(LegacyWeights::optimized()),
+                    depth,
+                ),
+                "n_tuple_small" => play(
+                    &mut Engine::<NTupleSmall>::new(NTupleSmallWeights::optimized()),
+                    depth,
+                ),
+                _ => unreachable!(),
+            };
         }
         "bench" => {
             let subcommand_matches = matches.subcommand_matches("bench").unwrap();
             let num_games = parse_arg::<u64>(subcommand_matches, "N");
             let depth = parse_arg::<u8>(subcommand_matches, "depth");
+            let v_function = get_arg(subcommand_matches, "v_function");
 
-            bench(num_games, depth);
+            match v_function {
+                "legacy" => bench(
+                    &mut Engine::<Legacy>::new(LegacyWeights::optimized()),
+                    num_games,
+                    depth,
+                ),
+                "n_tuple_small" => bench(
+                    &mut Engine::<NTupleSmall>::new(NTupleSmallWeights::optimized()),
+                    num_games,
+                    depth,
+                ),
+                _ => unreachable!(),
+            };
         }
         "train" => {
             let subcommand_matches = matches.subcommand_matches("train").unwrap();
             let num_batches = parse_arg::<u64>(subcommand_matches, "N");
             let zero = subcommand_matches.is_present("zero");
             let alpha = parse_arg::<f32>(subcommand_matches, "alpha");
+            let v_function = get_arg(subcommand_matches, "v_function");
 
-            train::<SelectedVFunction>(num_batches, alpha, zero);
+            match v_function {
+                "legacy" => train::<Legacy>(num_batches, alpha, zero),
+                "n_tuple_small" => train::<NTupleSmall>(num_batches, alpha, zero),
+                _ => unreachable!(),
+            };
         }
         _ => unreachable!(),
     }
@@ -117,6 +143,10 @@ where
     <T as std::str::FromStr>::Err: Debug,
 {
     matches.value_of(name).unwrap().parse::<T>().unwrap()
+}
+
+fn get_arg<'a>(matches: &'a ArgMatches, name: &str) -> &'a str {
+    matches.value_of(name).unwrap()
 }
 
 fn play_random_game(engine: &mut Engine<impl VFunction>, depth: u8, verbose: bool) -> Board {
@@ -140,24 +170,23 @@ fn play_random_game(engine: &mut Engine<impl VFunction>, depth: u8, verbose: boo
     board
 }
 
-fn bench(num_games: u64, depth: u8) {
-    let init_engine_bar = ProgressBar::new(1);
-    init_engine_bar.set_message("[1/2] Initializing precomputed tables");
-    init_engine_bar.set_style(ProgressStyle::default_spinner().template("{msg} {spinner}"));
+fn play(engine: &mut Engine<impl VFunction>, depth: u8) {
+    let board = play_random_game(engine, depth, true);
+    println!("Final Score: {}", board.score());
+}
 
+fn bench(engine: &mut Engine<impl VFunction>, num_games: u64, depth: u8) {
     // Init engine
     let mut scores = Vec::with_capacity(num_games as usize);
     let mut tiles_reached = [0u64; 16];
-    let mut engine = SelectedEngine::new(Weights::optimized());
-    init_engine_bar.finish();
 
     let play_games_bar = ProgressBar::new(num_games);
-    play_games_bar.set_message("[2/2] Playing games");
+    play_games_bar.set_message("Playing games");
     play_games_bar.set_style(ProgressStyle::default_bar().template("{msg} {wide_bar} {eta}"));
     play_games_bar.tick();
 
     for _ in 0..num_games {
-        let board = play_random_game(&mut engine, depth, false);
+        let board = play_random_game(engine, depth, false);
 
         scores.push(board.score());
 
