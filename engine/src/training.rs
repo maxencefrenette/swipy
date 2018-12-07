@@ -1,9 +1,10 @@
 use crate::engine::Engine;
 use crate::game::Board;
+use crate::testing::benchmark;
 use crate::v_function::VFunction;
 use serde_derive::{Deserialize, Serialize};
 
-const REPORTING_INTERVAL: u64 = 1000;
+const REPORTING_INTERVAL: u64 = 5000;
 
 pub fn train_td<F>(
     engine: &mut Engine<impl VFunction>,
@@ -48,8 +49,14 @@ pub fn train_td<F>(
         score_acc += state.score();
 
         if i % REPORTING_INTERVAL == 0 {
-            let avg_score = score_acc / (REPORTING_INTERVAL as f32);
-            on_progress(TrainingProgress::new(i, avg_score));
+            let training_score = score_acc / (REPORTING_INTERVAL as f32);
+            let test_score = benchmark(engine, 10, 3, |_| ()).average;
+
+            on_progress(TrainingProgress {
+                game: i,
+                training_score,
+                test_score,
+            });
             score_acc = 0.;
         }
     }
@@ -58,11 +65,6 @@ pub fn train_td<F>(
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TrainingProgress {
     pub game: u64,
-    pub score: f32,
-}
-
-impl TrainingProgress {
-    fn new(game: u64, score: f32) -> TrainingProgress {
-        TrainingProgress { game, score }
-    }
+    pub training_score: f32,
+    pub test_score: f32,
 }

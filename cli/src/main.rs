@@ -3,11 +3,11 @@ mod cli_helpers;
 use crate::cli_helpers::{parse_arg, OutputFormat, VFunctionChoice};
 use clap::{crate_authors, crate_version, App, AppSettings, Arg, SubCommand};
 use indicatif::{ProgressBar, ProgressStyle};
-use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 use swipy_engine::{
+    testing::{benchmark, play_random_game},
     train_td,
     v_function::{Legacy, LegacyWeights, NTupleSmall, NTupleSmallWeights, VFunction, Weights},
-    Board, Engine,
+    Engine,
 };
 
 const DEFAULT_DEPTH: &str = "3";
@@ -147,70 +147,31 @@ fn main() {
     }
 }
 
-fn play_random_game(engine: &mut Engine<impl VFunction>, depth: u8, verbose: bool) -> Board {
-    let mut board = Board::new();
-
-    if verbose {
-        println!("{:?}", board);
-        println!();
-    }
-
-    while !board.is_dead() {
-        let mov = engine.search(board, depth);
-        board = board.make_move(&mov);
-
-        if verbose {
-            println!("{:?}", board);
-            println!();
-        }
-    }
-
-    board
-}
-
 fn play(engine: &mut Engine<impl VFunction>, depth: u8) {
     let board = play_random_game(engine, depth, true);
     println!("Final Score: {}", board.score());
 }
 
 fn bench(engine: &mut Engine<impl VFunction>, num_games: u64, depth: u8) {
-    // Init engine
-    let mut scores = Vec::with_capacity(num_games as usize);
-    let mut tiles_reached = [0u64; 16];
-
     let play_games_bar = ProgressBar::new(num_games);
     play_games_bar.set_message("Playing games");
     play_games_bar.set_style(ProgressStyle::default_bar().template("{msg} {wide_bar} {eta}"));
     play_games_bar.tick();
 
-    for _ in 0..num_games {
-        let board = play_random_game(engine, depth, false);
-
-        scores.push(board.score());
-
-        for i in 0..board.highest_tile() {
-            tiles_reached[i as usize] += 1;
-        }
-
-        play_games_bar.inc(1);
-        engine.reset();
-    }
-
-    let avg = mean(scores.as_slice());
-    let sd = standard_deviation(scores.as_slice(), Some(avg));
-    let err = standard_error_mean(sd, scores.len() as f32, None);
-    let lower_bound = avg - 1.96 * err;
-    let upper_bound = avg + 1.96 * err;
+    let results = benchmark(engine, num_games, depth, |_| play_games_bar.inc(1));
 
     play_games_bar.finish();
     println!();
 
     println!("{} games played.", num_games);
-    println!("Average score: {:.0} \u{00b1} {:.0}", avg, err);
-    println!("Standard deviation: {:.0}", sd);
+    println!(
+        "Average score: {:.0} \u{00b1} {:.0}",
+        results.average, results.error
+    );
+    println!("Standard deviation: {:.0}", results.standard_deviation);
     println!(
         "Confidence interval (95%): [{:.0}, {:.0}]",
-        lower_bound, upper_bound
+        results.lower_bound, results.upper_bound
     );
     println!();
 
@@ -218,7 +179,7 @@ fn bench(engine: &mut Engine<impl VFunction>, num_games: u64, depth: u8) {
         println!(
             "{}: {}%",
             u64::pow(2, n),
-            (tiles_reached[n as usize] as f32) * 100. / (num_games as f32)
+            results.tiles_reached[n as usize] * 100.
         );
     }
 }
@@ -235,9 +196,10 @@ where
     let mut engine = Engine::<F>::new(weights);
 
     train_td(&mut engine, &num_batches, &alpha, |progress| match format {
-        OutputFormat::Human => {
-            println!("Game {}, Average Score: {}", progress.game, progress.score)
-        }
+        OutputFormat::Human => println!(
+            "Game {}, Average Score: {}",
+            progress.game, progress.test_score
+        ),
         OutputFormat::Json => println!("{}", serde_json::to_string(&progress).unwrap()),
     });
 
