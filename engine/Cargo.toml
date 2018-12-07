@@ -2,6 +2,7 @@
 name = "swipy-engine"
 version = "0.1.0"
 authors = ["Maxence Frenette <maxence.frenette@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 fnv = "1.0.6"

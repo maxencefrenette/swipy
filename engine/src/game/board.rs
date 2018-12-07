@@ -1,5 +1,6 @@
 use super::row::Row;
-use lookup_table::LookupTable;
+use crate::lookup_table::LookupTable;
+use lazy_static::lazy_static;
 use rand::{
     distributions::{Distribution, WeightedIndex},
     thread_rng,

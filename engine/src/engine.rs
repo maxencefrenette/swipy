@@ -1,7 +1,7 @@
-use game::{Board, Direction, TileSpawn};
+use crate::game::{Board, Direction, TileSpawn};
 use std::iter::Iterator;
-use transposition_table::{PositionEval, TranspositionTable};
-use v_function::VFunction;
+use crate::transposition_table::{PositionEval, TranspositionTable};
+use crate::v_function::VFunction;
 
 /// The search depth counter increase when processing a move where a 4 spawns.
 /// This is approximately equal to ln(0.1) / ln(0.9) = 21.85434532678.

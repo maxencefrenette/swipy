@@ -1,5 +1,7 @@
 use super::{VFunction, Weights};
-use game::Board;
+use crate::game::Board;
+use lazy_static::lazy_static;
+use serde_derive::{Deserialize, Serialize};
 
 lazy_static! {
     static ref OPTIMIZED: LegacyWeights =

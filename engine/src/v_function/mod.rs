@@ -1,4 +1,4 @@
-use game::Board;
+use crate::game::Board;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 

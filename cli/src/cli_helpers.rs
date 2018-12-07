@@ -1,6 +1,7 @@
 use clap::ArgMatches;
 use std::fmt::Debug;
 use std::str::FromStr;
+use strum_macros::EnumString;
 
 pub fn parse_arg<T>(matches: &ArgMatches, name: &str) -> T
 where

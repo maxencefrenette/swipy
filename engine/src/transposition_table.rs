@@ -1,5 +1,5 @@
 use fnv::FnvHasher;
-use game::Board;
+use crate::game::Board;
 use std::hash::{Hash, Hasher};
 use std::iter::repeat;
 

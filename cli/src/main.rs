@@ -1,17 +1,7 @@
-#[macro_use]
-extern crate clap;
-extern crate indicatif;
-extern crate serde_json;
-extern crate statistical;
-extern crate strum;
-#[macro_use]
-extern crate strum_macros;
-extern crate swipy_engine;
-
 mod cli_helpers;
 
-use clap::{App, AppSettings, Arg, SubCommand};
-use cli_helpers::{parse_arg, OutputFormat, VFunctionChoice};
+use crate::cli_helpers::{parse_arg, OutputFormat, VFunctionChoice};
+use clap::{crate_authors, crate_version, App, AppSettings, Arg, SubCommand};
 use indicatif::{ProgressBar, ProgressStyle};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 use swipy_engine::{
@@ -47,7 +37,8 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .default_value(DEFAULT_DEPTH)
                 .help("The expectimax search depth"),
-        ).arg(&v_function);
+        )
+        .arg(&v_function);
     let bench = SubCommand::with_name("bench")
         .about("plays N games to test the strength of the AI")
         .arg(
@@ -55,33 +46,38 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
                 .help("The amount of games to play")
                 .required(true)
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             // TODO: Add a validator
             Arg::with_name("depth")
                 .long("depth")
                 .takes_value(true)
                 .default_value(DEFAULT_DEPTH)
                 .help("The expectimax search depth"),
-        ).arg(&v_function);
+        )
+        .arg(&v_function);
     let train = SubCommand::with_name("train")
         .about("continuously plays to optimize the AI")
         .arg(
             Arg::with_name("zero")
                 .short("z")
                 .help("Starts training from scratch"),
-        ).arg(
+        )
+        .arg(
             // TODO: Add a validator
             Arg::with_name("alpha")
                 .long("alpha")
                 .takes_value(true)
                 .default_value(DEFAULT_LEARNING_RATE)
                 .help("The learning rate"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("N")
                 .help("The amount of batches of 5 games to play")
                 .required(true)
                 .takes_value(true),
-        ).arg(&v_function)
+        )
+        .arg(&v_function)
         .arg(&format);
 
     App::new("Swipy - 2048 AI")

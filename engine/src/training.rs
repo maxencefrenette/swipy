@@ -1,6 +1,7 @@
-use engine::Engine;
-use game::Board;
-use v_function::VFunction;
+use crate::engine::Engine;
+use crate::game::Board;
+use crate::v_function::VFunction;
+use serde_derive::{Deserialize, Serialize};
 
 const REPORTING_INTERVAL: u64 = 1000;
 
