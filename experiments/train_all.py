@@ -37,25 +37,35 @@ def train(v_function):
             with open(f"networks/{v_function}.json", "w") as file:
                 file.write(line)
 
-    return games, training_scores, test_scores
+    history = {
+        "games": games,
+        "training_scores": training_scores,
+        "test_scores": test_scores,
+    }
+
+    with open(f"networks/{v_function}.training.json", "w") as file:
+        json.dump(history, file)
+
+    return history
 
 
-games1, training1, test1 = train("legacy")
-games2, training2, test2 = train("n_tuple_small")
+h1 = train("legacy")
+h2 = train("n_tuple_small")
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True)
 
 ax1.set_title("Legacy V-Function")
-ax1.plot(games1, training1, "C1")
-ax1.twinx().plot(games1, test1, "C2")
+ax1.plot(h1["games"], h1["training_scores"], "C1")
+ax1.twinx().plot(h1["games"], h1["test_scores"], "C2")
 
 ax2.set_title("N-Tuple Small V-Function")
-ax2.plot(games2, training2, "C1")
-ax2.twinx().plot(games2, test2, "C2")
+ax2.plot(h2["games"], h2["training_scores"], "C1")
+ax2.twinx().plot(h2["games"], h2["test_scores"], "C2")
 
 train_line = mlines.Line2D([], [], color='C1', label="Training")
 test_line = mlines.Line2D([], [], color='C2', label="Testing")
-ax2.legend(handles=[train_line, test_line], bbox_to_anchor=(0.5, -.11), loc="upper center", shadow=True, ncol=2)
+ax2.legend(handles=[train_line, test_line], bbox_to_anchor=(
+    0.5, -.11), loc="upper center", shadow=True, ncol=2)
 
 fig.tight_layout()
 
