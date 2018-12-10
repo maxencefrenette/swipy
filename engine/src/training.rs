@@ -17,6 +17,23 @@ pub fn train_td<F>(
     let mut score_acc: f32 = 0.;
 
     for i in 0..*num_batches {
+        // Report training stats
+        if i % REPORTING_INTERVAL == 0 {
+            let training_score = if i == 0 {
+                None
+            } else {
+                Some(score_acc / (REPORTING_INTERVAL as f32))
+            };
+            let test_score = benchmark(engine, 25, 3, |_| ()).average;
+
+            on_progress(TrainingProgress {
+                game: i,
+                training_score,
+                test_score,
+            });
+            score_acc = 0.;
+        }
+
         let mut state = Board::new();
 
         while !state.is_dead() {
@@ -47,24 +64,12 @@ pub fn train_td<F>(
         }
 
         score_acc += state.score();
-
-        if i % REPORTING_INTERVAL == 0 {
-            let training_score = score_acc / (REPORTING_INTERVAL as f32);
-            let test_score = benchmark(engine, 10, 3, |_| ()).average;
-
-            on_progress(TrainingProgress {
-                game: i,
-                training_score,
-                test_score,
-            });
-            score_acc = 0.;
-        }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TrainingProgress {
     pub game: u64,
-    pub training_score: f32,
+    pub training_score: Option<f32>,
     pub test_score: f32,
 }

@@ -1,8 +1,15 @@
 
+# Rust
 /target
 /*/target
 **/*.rs.bk
 
+# Python
+__pycache__/
+
 /.vscode
 
 /networks/*.backup.json
+
+# Plotly plots
+temp-plot.html
