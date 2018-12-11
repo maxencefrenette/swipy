@@ -203,14 +203,15 @@ fn train<F>(num_batches: u64, alpha: f32, zero: bool, format: OutputFormat)
 where
     F: VFunction,
 {
-    let weights = match zero {
-        true => F::Weights::default(),
-        false => F::Weights::optimized(),
+    let weights = if zero {
+        F::Weights::default()
+    } else {
+        F::Weights::optimized()
     };
 
     let mut engine = Engine::<F>::new(weights);
 
-    train_td(&mut engine, &num_batches, &alpha, |progress| match format {
+    train_td(&mut engine, num_batches, alpha, |progress| match format {
         OutputFormat::Human => println!(
             "Game {}, Average Score: {}",
             progress.game, progress.test_score

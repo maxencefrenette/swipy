@@ -8,40 +8,42 @@ pub struct Row(u16);
 
 impl Row {
     pub fn iter_all() -> impl Iterator<Item = Row> {
-        (0..=0xFFFF).map(|i| Row::from_u16(i))
+        (0..=0xFFFF).map(Row::from_u16)
     }
 
     pub fn new(tiles: &[u16]) -> Row {
         assert!(tiles.len() == 4);
-        Row((tiles[0] << 0) | (tiles[1] << 4) | (tiles[2] << 8) | (tiles[3] << 12))
+        Row((tiles[0]) | (tiles[1] << 4) | (tiles[2] << 8) | (tiles[3] << 12))
     }
 
     pub fn from_u16(bits: u16) -> Row {
         Row(bits)
     }
 
-    pub fn as_u16(&self) -> u16 {
+    pub fn as_u16(self) -> u16 {
         self.0 as u16
     }
 
-    pub fn tile_at(&self, i: usize) -> u16 {
+    pub fn tile_at(self, i: usize) -> u16 {
         assert!(i < 4, "i is in the interval 0..4");
         (self.0 >> (i * 4)) & TILE_MASK
     }
 
-    pub fn score(&self) -> f32 {
+    pub fn score(self) -> f32 {
         (0..4)
             .map(|i| {
-                let tile = self.tile_at(i) as u32;
+                let tile = u32::from(self.tile_at(i));
                 if tile > 1 {
                     ((tile - 1) * (1 << tile)) as f32
                 } else {
                     0.
                 }
-            }).sum()
+            })
+            .sum()
     }
 
-    pub fn count_empties(&self) -> u64 {
+    #[allow(clippy::verbose_bit_mask)]
+    pub fn count_empties(self) -> u64 {
         let mut bitboard = self.0;
         let mut empties = 0;
 
@@ -56,7 +58,7 @@ impl Row {
         empties
     }
 
-    pub fn moved(&self) -> Row {
+    pub fn moved(self) -> Row {
         let mut tiles: Vec<u16> = (0..4).map(|i| self.tile_at(i)).collect();
 
         let mut changed = true;
@@ -82,7 +84,7 @@ impl Row {
         Row::new(tiles.as_slice())
     }
 
-    pub fn reversed(&self) -> Row {
+    pub fn reversed(self) -> Row {
         Row::new(&[
             self.tile_at(3),
             self.tile_at(2),
@@ -91,8 +93,8 @@ impl Row {
         ])
     }
 
-    pub fn as_column(&self) -> u64 {
-        let tmp = self.0 as u64;
+    pub fn as_column(self) -> u64 {
+        let tmp = u64::from(self.0);
         (tmp | (tmp << 12) | (tmp << 24) | (tmp << 36)) & COL_MASK
     }
 }
@@ -126,6 +128,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::float_cmp)]
     fn score() {
         assert_eq!(Row::new(&[0, 2, 0, 0]).score(), 4.);
         assert_eq!(Row::new(&[0, 4, 4, 0]).score(), 96.);

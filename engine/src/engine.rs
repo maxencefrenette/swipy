@@ -1,7 +1,7 @@
 use crate::game::{Board, Direction, TileSpawn};
-use std::iter::Iterator;
 use crate::transposition_table::{PositionEval, TranspositionTable};
 use crate::v_function::VFunction;
+use std::iter::Iterator;
 
 /// The search depth counter increase when processing a move where a 4 spawns.
 /// This is approximately equal to ln(0.1) / ln(0.9) = 21.85434532678.
@@ -46,7 +46,7 @@ where
     /// The `board` argument represents a state of the board between turns.
     fn expectimax_move(&mut self, board: Board, depth: u8) -> f32 {
         let moves = board.gen_moves();
-        if moves.len() == 0 {
+        if moves.is_empty() {
             return 0.;
         }
 
@@ -55,7 +55,8 @@ where
             .map(|(_, next_board)| {
                 self.expectimax_spawn_tile(*next_board, depth)
                     + (next_board.score() - board.score())
-            }).max_by(|a, b| a.partial_cmp(b).unwrap())
+            })
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap()
     }
 
@@ -88,7 +89,8 @@ where
                 };
 
                 prob * self.expectimax_move(board, new_depth)
-            }).sum();
+            })
+            .sum();
 
         self.transposition_table
             .set(board, PositionEval::new(depth, score));
@@ -98,10 +100,10 @@ where
 
     /// Statically evaluates the given position by evaluating the expected score
     pub fn static_eval(&self, position: Board) -> f32 {
-        self.v_function.eval(&position)
+        self.v_function.eval(position)
     }
 
-    pub fn learn(&mut self, position: &Board, delta: &f32) {
+    pub fn learn(&mut self, position: Board, delta: f32) {
         self.v_function.learn(position, delta)
     }
 

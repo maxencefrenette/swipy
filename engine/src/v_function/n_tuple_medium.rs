@@ -33,7 +33,7 @@ impl VFunction for NTupleMedium {
         NTupleMedium { weights }
     }
 
-    fn eval(&self, state: &Board) -> f32 {
+    fn eval(&self, state: Board) -> f32 {
         let mut eval = 0.;
 
         for i in &[0, 3] {
@@ -59,7 +59,7 @@ impl VFunction for NTupleMedium {
         eval
     }
 
-    fn learn(&mut self, state: &Board, delta: &f32) {
+    fn learn(&mut self, state: Board, delta: f32) {
         let adjusted_delta = delta / 16.;
 
         for i in &[0, 3] {

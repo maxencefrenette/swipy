@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 use statistical::{mean, standard_deviation, univariate::standard_error_mean};
 
 pub fn play_random_game(engine: &mut Engine<impl VFunction>, depth: u8, verbose: bool) -> Board {
-    let mut board = Board::new();
+    let mut board = Board::new_random();
 
     if verbose {
         println!("{:?}", board);
@@ -14,7 +14,7 @@ pub fn play_random_game(engine: &mut Engine<impl VFunction>, depth: u8, verbose:
 
     while !board.is_dead() {
         let mov = engine.search(board, depth);
-        board = board.make_move(&mov);
+        board = board.make_move(mov);
 
         if verbose {
             println!("{:?}", board);

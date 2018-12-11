@@ -34,7 +34,7 @@ impl VFunction for NTupleSmall {
         NTupleSmall { weights }
     }
 
-    fn eval(&self, state: &Board) -> f32 {
+    fn eval(&self, state: Board) -> f32 {
         let mut eval = 0.;
 
         for i in &[0, 3] {
@@ -58,11 +58,11 @@ impl VFunction for NTupleSmall {
         eval
     }
 
-    fn learn(&mut self, position: &Board, delta: &f32) {
+    fn learn(&mut self, state: Board, delta: f32) {
         let adjusted_delta = delta / 16.;
 
         for i in &[0, 3] {
-            let row = position.row_at(*i);
+            let row = state.row_at(*i);
             self.weights.corner[row.tile_at(0) as usize] += adjusted_delta;
             self.weights.edge[row.tile_at(1) as usize] += adjusted_delta;
             self.weights.edge[row.tile_at(2) as usize] += adjusted_delta;
@@ -70,7 +70,7 @@ impl VFunction for NTupleSmall {
         }
 
         for i in &[0, 3] {
-            let row = position.row_at(*i);
+            let row = state.row_at(*i);
             self.weights.edge[row.tile_at(0) as usize] += adjusted_delta;
             self.weights.center[row.tile_at(1) as usize] += adjusted_delta;
             self.weights.center[row.tile_at(2) as usize] += adjusted_delta;
