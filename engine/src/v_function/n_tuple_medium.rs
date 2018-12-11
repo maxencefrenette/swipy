@@ -9,10 +9,19 @@ lazy_static! {
             .expect("valid legacy weights");
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NTupleMediumWeights {
     pub outer: Vec<f32>,
     pub inner: Vec<f32>,
+}
+
+impl Default for NTupleMediumWeights {
+    fn default() -> Self {
+        NTupleMediumWeights {
+            outer: vec![0.; 0xF_0000],
+            inner: vec![0.; 0xF_0000],
+        }
+    }
 }
 
 impl Weights for NTupleMediumWeights {
