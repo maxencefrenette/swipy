@@ -6,7 +6,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use swipy_engine::{
     testing::{benchmark, play_random_game},
     train_td,
-    v_function::{Legacy, LegacyWeights, NTupleSmall, NTupleSmallWeights, VFunction, Weights},
+    v_function::{
+        Legacy, LegacyWeights, NTupleMedium, NTupleMediumWeights, NTupleSmall, NTupleSmallWeights,
+        VFunction, Weights,
+    },
     Engine,
 };
 
@@ -107,6 +110,10 @@ fn main() {
                     &mut Engine::<NTupleSmall>::new(NTupleSmallWeights::optimized()),
                     depth,
                 ),
+                VFunctionChoice::NTupleMedium => play(
+                    &mut Engine::<NTupleMedium>::new(NTupleMediumWeights::optimized()),
+                    depth,
+                ),
             };
         }
         "bench" => {
@@ -126,6 +133,11 @@ fn main() {
                     num_games,
                     depth,
                 ),
+                VFunctionChoice::NTupleMedium => bench(
+                    &mut Engine::<NTupleMedium>::new(NTupleMediumWeights::optimized()),
+                    num_games,
+                    depth,
+                ),
             };
         }
         "train" => {
@@ -140,6 +152,9 @@ fn main() {
                 VFunctionChoice::Legacy => train::<Legacy>(num_batches, alpha, zero, format),
                 VFunctionChoice::NTupleSmall => {
                     train::<NTupleSmall>(num_batches, alpha, zero, format)
+                }
+                VFunctionChoice::NTupleMedium => {
+                    train::<NTupleMedium>(num_batches, alpha, zero, format)
                 }
             };
         }

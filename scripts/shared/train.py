@@ -1,18 +1,13 @@
-#!/usr/bin/python3
-
 import json
 import os
 from subprocess import run, Popen, PIPE
-import shared
-
-run(["cargo", "build", "--release"])
-
-executable = ["./target/release/swipy-cli"]
+from .__init__ import executable
 
 
-def train(v_function):
+def train(v_function, num_games, alpha):
     process = Popen(
-        executable + ["train", "30000", "-z", "--format", "json"],
+        executable
+        + ["train", f"{num_games}", "-z", "--alpha", f"{alpha}", "--format", "json"],
         stdout=PIPE,
         encoding="UTF-8",
     )
@@ -49,9 +44,3 @@ def train(v_function):
         json.dump(history, file)
 
     return history
-
-
-h1 = train("legacy")
-h2 = train("n_tuple_small")
-
-shared.plot_many([("Legacy", h1), ("N-Tuple Small", h2)])

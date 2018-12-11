@@ -29,10 +29,11 @@ impl OutputFormat {
 pub enum VFunctionChoice {
     Legacy,
     NTupleSmall,
+    NTupleMedium,
 }
 
 impl VFunctionChoice {
     pub fn possible_values() -> &'static [&'static str] {
-        &["legacy", "n_tuple_small"]
+        &["legacy", "n_tuple_small", "n_tuple_medium"]
     }
 }

@@ -3,9 +3,11 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 
 mod legacy;
+mod n_tuple_medium;
 mod n_tuple_small;
 
 pub use self::legacy::*;
+pub use self::n_tuple_medium::*;
 pub use self::n_tuple_small::*;
 
 pub trait Weights: Serialize + DeserializeOwned {
