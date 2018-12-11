@@ -9,7 +9,10 @@ __pycache__/
 
 /.vscode
 
+# Trained Networks
 /networks/*.backup.json
+## This one is just too large for git
+/networks/n_tuple_medium*
 
 # Plotly plots
 temp-plot.html
