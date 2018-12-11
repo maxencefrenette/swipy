@@ -7,7 +7,7 @@ from .__init__ import executable
 def train(v_function, num_games, alpha):
     process = Popen(
         executable
-        + ["train", f"{num_games}", "-z", "--alpha", f"{alpha}", "--format", "json"],
+        + ["train", f"{num_games}", "--v_function", f"{v_function}", "-z", "--alpha", f"{alpha}", "--format", "json"],
         stdout=PIPE,
         encoding="UTF-8",
     )
