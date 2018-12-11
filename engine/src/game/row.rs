@@ -16,14 +16,6 @@ impl Row {
         Row((tiles[0]) | (tiles[1] << 4) | (tiles[2] << 8) | (tiles[3] << 12))
     }
 
-    pub fn from_u16(bits: u16) -> Row {
-        Row(bits)
-    }
-
-    pub fn as_u16(self) -> u16 {
-        self.0 as u16
-    }
-
     pub fn tile_at(self, i: usize) -> u16 {
         assert!(i < 4, "i is in the interval 0..4");
         (self.0 >> (i * 4)) & TILE_MASK
@@ -96,6 +88,34 @@ impl Row {
     pub fn as_column(self) -> u64 {
         let tmp = u64::from(self.0);
         (tmp | (tmp << 12) | (tmp << 24) | (tmp << 36)) & COL_MASK
+    }
+
+    // Conversions
+
+    pub fn from_u16(bits: u16) -> Row {
+        Row(bits)
+    }
+
+    /// Potentially lossy conversion from `usize` to `Row`
+    pub fn from_usize_lossy(bits: usize) -> Row {
+        Row(bits as u16)
+    }
+
+    /// Potentially lossy conversion from `u64` to `Row`
+    pub fn from_u64_lossy(bits: u64) -> Row {
+        Row(bits as u16)
+    }
+
+    pub fn into_u16(self) -> u16 {
+        self.0
+    }
+
+    pub fn into_usize(self) -> usize {
+        self.0.into()
+    }
+
+    pub fn into_u64(self) -> u64 {
+        self.0.into()
     }
 }
 

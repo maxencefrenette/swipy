@@ -13,7 +13,7 @@ impl<T> LookupTable<T> {
     {
         LookupTable(
             (0..TABLE_SIZE)
-                .map(|row| calc(Row::from_u16(row as u16)))
+                .map(|index| calc(Row::from_usize_lossy(index)))
                 .collect(),
         )
     }
@@ -23,13 +23,13 @@ impl<T> Index<Row> for LookupTable<T> {
     type Output = T;
 
     fn index(&self, row: Row) -> &T {
-        &self.0[row.as_u16() as usize]
+        &self.0[row.into_usize()]
     }
 }
 
 impl<T> IndexMut<Row> for LookupTable<T> {
     fn index_mut(&mut self, row: Row) -> &mut T {
-        &mut self.0[row.as_u16() as usize]
+        &mut self.0[row.into_usize()]
     }
 }
 

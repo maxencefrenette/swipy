@@ -50,8 +50,8 @@ impl VFunction for NTupleMedium {
             let column = state.column_at(*i);
 
             for tuple in &[row, column] {
-                eval += self.weights.outer[tuple.as_u16() as usize];
-                eval += self.weights.outer[tuple.reversed().as_u16() as usize];
+                eval += self.weights.outer[tuple.into_usize()];
+                eval += self.weights.outer[tuple.reversed().into_usize()];
             }
         }
 
@@ -60,8 +60,8 @@ impl VFunction for NTupleMedium {
             let column = state.column_at(*i);
 
             for tuple in &[row, column] {
-                eval += self.weights.inner[tuple.as_u16() as usize];
-                eval += self.weights.inner[tuple.reversed().as_u16() as usize];
+                eval += self.weights.inner[tuple.into_usize()];
+                eval += self.weights.inner[tuple.reversed().into_usize()];
             }
         }
 
@@ -76,8 +76,8 @@ impl VFunction for NTupleMedium {
             let column = state.column_at(*i);
 
             for tuple in &[row, column] {
-                self.weights.outer[tuple.as_u16() as usize] += adjusted_delta;
-                self.weights.outer[tuple.reversed().as_u16() as usize] += adjusted_delta;
+                self.weights.outer[tuple.into_usize()] += adjusted_delta;
+                self.weights.outer[tuple.reversed().into_usize()] += adjusted_delta;
             }
         }
 
@@ -86,8 +86,8 @@ impl VFunction for NTupleMedium {
             let column = state.column_at(*i);
 
             for tuple in &[row, column] {
-                self.weights.inner[tuple.as_u16() as usize] += adjusted_delta;
-                self.weights.inner[tuple.reversed().as_u16() as usize] += adjusted_delta;
+                self.weights.inner[tuple.into_usize()] += adjusted_delta;
+                self.weights.inner[tuple.reversed().into_usize()] += adjusted_delta;
             }
         }
     }

@@ -94,7 +94,7 @@ impl Board {
     }
 
     pub fn row_at(self, i: usize) -> Row {
-        Row::from_u16((self.0 >> (i * 16)) as u16)
+        Row::from_u64_lossy(self.0 >> (i * 16))
     }
 
     pub fn column_at(self, i: usize) -> Row {
@@ -156,19 +156,19 @@ impl Board {
     pub fn move_candidate(self, direction: Direction) -> Board {
         match direction {
             Direction::Left => {
-                let mut res = 0;
-                res |= u64::from(LEFT_MOVES[self.row_at(0)].as_u16());
-                res |= u64::from(LEFT_MOVES[self.row_at(1)].as_u16()) << 16;
-                res |= u64::from(LEFT_MOVES[self.row_at(2)].as_u16()) << 32;
-                res |= u64::from(LEFT_MOVES[self.row_at(3)].as_u16()) << 48;
+                let mut res: u64 = 0;
+                res |= LEFT_MOVES[self.row_at(0)].into_u64();
+                res |= LEFT_MOVES[self.row_at(1)].into_u64() << 16;
+                res |= LEFT_MOVES[self.row_at(2)].into_u64() << 32;
+                res |= LEFT_MOVES[self.row_at(3)].into_u64() << 48;
                 Board::from_u64(res)
             }
             Direction::Right => {
                 let mut res = 0;
-                res |= u64::from(RIGHT_MOVES[self.row_at(0)].as_u16());
-                res |= u64::from(RIGHT_MOVES[self.row_at(1)].as_u16()) << 16;
-                res |= u64::from(RIGHT_MOVES[self.row_at(2)].as_u16()) << 32;
-                res |= u64::from(RIGHT_MOVES[self.row_at(3)].as_u16()) << 48;
+                res |= RIGHT_MOVES[self.row_at(0)].into_u64();
+                res |= RIGHT_MOVES[self.row_at(1)].into_u64() << 16;
+                res |= RIGHT_MOVES[self.row_at(2)].into_u64() << 32;
+                res |= RIGHT_MOVES[self.row_at(3)].into_u64() << 48;
                 Board::from_u64(res)
             }
             Direction::Up => {
