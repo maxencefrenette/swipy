@@ -172,7 +172,7 @@ impl Board {
                 Board::from_u64(res)
             }
             Direction::Up => {
-                let transposed = self.transpose();
+                let transposed = self.transposed();
                 let mut res = 0;
                 res |= UP_MOVES[transposed.row_at(0)];
                 res |= UP_MOVES[transposed.row_at(1)] << 4;
@@ -181,7 +181,7 @@ impl Board {
                 Board::from_u64(res)
             }
             Direction::Down => {
-                let transposed = self.transpose();
+                let transposed = self.transposed();
                 let mut res = 0;
                 res |= DOWN_MOVES[transposed.row_at(0)];
                 res |= DOWN_MOVES[transposed.row_at(1)] << 4;
@@ -230,7 +230,7 @@ impl Board {
         results
     }
 
-    fn transpose(self) -> Board {
+    fn transposed(self) -> Board {
         let x = self.0;
         let a1 = x & 0xF0F0_0F0F_F0F0_0F0F;
         let a2 = x & 0x0000_F0F0_0000_F0F0;
@@ -250,5 +250,41 @@ impl fmt::Debug for Board {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const fn row(tiles: [u64; 4]) -> u64 {
+        tiles[0] | (tiles[1] << 4) | (tiles[2] << 8) | (tiles[3] << 12)
+    }
+
+    const fn board(tiles: [[u64; 4]; 4]) -> Board {
+        Board(row(tiles[0]) | (row(tiles[1]) << 16) | (row(tiles[2]) << 32) | (row(tiles[3]) << 48))
+    }
+
+    const BOARD_1: Board = board([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]);
+
+    #[test]
+    fn at() {
+        assert_eq!(BOARD_1.at(1, 1), 5);
+    }
+
+    #[test]
+    fn row_at() {
+        assert_eq!(BOARD_1.row_at(0), Row::new(&[0, 1, 2, 3]));
+        assert_eq!(BOARD_1.row_at(1), Row::new(&[4, 5, 6, 7]));
+        assert_eq!(BOARD_1.row_at(2), Row::new(&[8, 9, 10, 11]));
+        assert_eq!(BOARD_1.row_at(3), Row::new(&[12, 13, 14, 15]));
+    }
+
+    #[test]
+    fn column_at() {
+        assert_eq!(BOARD_1.column_at(0), Row::new(&[0, 4, 8, 12]));
+        assert_eq!(BOARD_1.column_at(1), Row::new(&[1, 5, 9, 13]));
+        assert_eq!(BOARD_1.column_at(2), Row::new(&[2, 6, 10, 14]));
+        assert_eq!(BOARD_1.column_at(3), Row::new(&[3, 7, 11, 15]));
     }
 }
