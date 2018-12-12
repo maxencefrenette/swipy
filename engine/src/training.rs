@@ -4,12 +4,11 @@ use crate::testing::benchmark;
 use crate::v_function::VFunction;
 use serde_derive::{Deserialize, Serialize};
 
-const REPORTING_INTERVAL: u64 = 5000;
-
 pub fn train_td<F>(
     engine: &mut Engine<impl VFunction>,
     num_batches: u64,
     alpha: f32,
+    benchmark_interval: u64,
     on_progress: F,
 ) where
     F: Fn(TrainingProgress) -> (),
@@ -18,11 +17,11 @@ pub fn train_td<F>(
 
     for i in 0..num_batches {
         // Report training stats
-        if i % REPORTING_INTERVAL == 0 {
+        if i % benchmark_interval == 0 {
             let training_score = if i == 0 {
                 None
             } else {
-                Some(score_acc / (REPORTING_INTERVAL as f32))
+                Some(score_acc / (benchmark_interval as f32))
             };
             let test_score = benchmark(engine, 25, 3, |_| ()).average;
 

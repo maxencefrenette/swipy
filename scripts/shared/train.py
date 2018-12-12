@@ -4,10 +4,21 @@ from subprocess import run, Popen, PIPE
 from .__init__ import executable
 
 
-def train(v_function, num_games, alpha):
+def train(v_function, num_games, alpha, benchmark_interval=5000):
     process = Popen(
         executable
-        + ["train", f"{num_games}", "--v_function", f"{v_function}", "-z", "--alpha", f"{alpha}", "--format", "json"],
+        + [
+            "train",
+            f"{num_games}",
+            "-z",
+            "--v_function",
+            f"{v_function}",
+            "--alpha",
+            f"{alpha}",
+            f"--benchmark-interval={benchmark_interval}",
+            "--format",
+            "json",
+        ],
         stdout=PIPE,
         encoding="UTF-8",
     )

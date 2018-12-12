@@ -15,6 +15,7 @@ use swipy_engine::{
 
 const DEFAULT_DEPTH: &str = "3";
 const DEFAULT_LEARNING_RATE: &str = "0.0005";
+const DEFAULT_BENCHMARK_INTERVAL: &str = "5000";
 
 fn init_clap<'a, 'b>() -> App<'a, 'b> {
     let v_function = Arg::with_name("v_function")
@@ -78,6 +79,14 @@ fn init_clap<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("N")
                 .help("The amount of batches of 5 games to play")
                 .required(true)
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("benchmark-interval")
+                .long("benchmark-interval")
+                .help("The interval at which the current network should be tested")
+                .required(false)
+                .default_value(DEFAULT_BENCHMARK_INTERVAL)
                 .takes_value(true),
         )
         .arg(&v_function)
@@ -147,14 +156,17 @@ fn main() {
             let alpha = parse_arg::<f32>(subcommand_matches, "alpha");
             let v_function = parse_arg::<VFunctionChoice>(subcommand_matches, "v_function");
             let format = parse_arg::<OutputFormat>(subcommand_matches, "format");
+            let benchmark_interval = parse_arg::<u64>(subcommand_matches, "benchmark-interval");
 
             match v_function {
-                VFunctionChoice::Legacy => train::<Legacy>(num_batches, alpha, zero, format),
+                VFunctionChoice::Legacy => {
+                    train::<Legacy>(num_batches, alpha, zero, format, benchmark_interval)
+                }
                 VFunctionChoice::NTupleSmall => {
-                    train::<NTupleSmall>(num_batches, alpha, zero, format)
+                    train::<NTupleSmall>(num_batches, alpha, zero, format, benchmark_interval)
                 }
                 VFunctionChoice::NTupleMedium => {
-                    train::<NTupleMedium>(num_batches, alpha, zero, format)
+                    train::<NTupleMedium>(num_batches, alpha, zero, format, benchmark_interval)
                 }
             };
         }
@@ -199,7 +211,7 @@ fn bench(engine: &mut Engine<impl VFunction>, num_games: u64, depth: u8) {
     }
 }
 
-fn train<F>(num_batches: u64, alpha: f32, zero: bool, format: OutputFormat)
+fn train<F>(num_batches: u64, alpha: f32, zero: bool, format: OutputFormat, benchmark_interval: u64)
 where
     F: VFunction,
 {
@@ -211,13 +223,19 @@ where
 
     let mut engine = Engine::<F>::new(weights);
 
-    train_td(&mut engine, num_batches, alpha, |progress| match format {
-        OutputFormat::Human => println!(
-            "Game {}, Average Score: {}",
-            progress.game, progress.test_score
-        ),
-        OutputFormat::Json => println!("{}", serde_json::to_string(&progress).unwrap()),
-    });
+    train_td(
+        &mut engine,
+        num_batches,
+        alpha,
+        benchmark_interval,
+        |progress| match format {
+            OutputFormat::Human => println!(
+                "Game {}, Average Score: {}",
+                progress.game, progress.test_score
+            ),
+            OutputFormat::Json => println!("{}", serde_json::to_string(&progress).unwrap()),
+        },
+    );
 
     let new_weights = engine.into_weights();
 
