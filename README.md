@@ -12,7 +12,6 @@ Swipy is a 2048 AI using modern AI techniques.
 
 * Average score (1-ply): ~23,000
 * Average score (3-ply): ~60,000
-
 * [x] Expectimax search
 * [x] N-tuple network v-function
   * [x] Learn afterstates
