@@ -15,8 +15,8 @@ def load_json(file_name):
         return json.load(file)
 
 
-def get_v_function_arg():
+def get_args():
     parser = ArgumentParser()
     parser.add_argument("v_function")
-    args = parser.parse_args()
-    return args.v_function
+    parser.add_argument("--plot-only", action="store_true")
+    return parser.parse_args()
