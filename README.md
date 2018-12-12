@@ -1,8 +1,27 @@
 # Swipy
 
-Swipy is a 2048 AI using modern AI techniques
+Swipy is a 2048 AI using modern AI techniques.
+
+## Goals
+
+* Implement an open-source 2048 engine that is fast and achieves high scores;
+* Demonstrate the capabilities of Rust as a replacement for C/C++ for computationally-intensive tasks in a reinforcement learning context;
+* Acquire experience with reinforcement learning
+
+## Features
+
+* Average score (1-ply): ~23,000
+* Average score (3-ply): ~60,000
+
+* [x] Expectimax search
+* [x] N-tuple network v-function
+  * [x] Learn afterstates
+* [x] TD(0) learning
+* [ ] Multi-stage learning (game phases)
 
 ## Previous Work
+
+Swipy is largely based on the following implements and papers about 2048 engines.
 
 * <https://github.com/kaito4213/2048-Game-Player>
 * <https://github.com/nneonneo/2048-ai>
