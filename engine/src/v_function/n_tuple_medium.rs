@@ -96,3 +96,34 @@ impl VFunction for NTupleMedium {
         self.weights
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::*;
+
+    const BOARD_1: Board =
+        Board::from_array([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]);
+    const BOARD_2: Board =
+        Board::from_array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
+
+    #[test]
+    fn eval_zero() {
+        let default = NTupleMedium::default();
+        assert_relative_eq!(default.eval(BOARD_1), 0.);
+    }
+
+    #[test]
+    fn training_eval() {
+        let mut network = NTupleMedium::default();
+        network.learn(BOARD_1, 1.0);
+        assert_relative_eq!(network.eval(BOARD_1), 1.0);
+    }
+
+    #[test]
+    fn generalization() {
+        let mut network = NTupleMedium::default();
+        network.learn(BOARD_1, 1.0);
+        assert_relative_eq!(network.eval(BOARD_2), 1. / 8.);
+    }
+}

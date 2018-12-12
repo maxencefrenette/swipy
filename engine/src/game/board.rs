@@ -79,7 +79,17 @@ lazy_static! {
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board(u64);
 
+/// Helper function for `Board::from_array`.
+const fn row(tiles: [u64; 4]) -> u64 {
+    tiles[0] | (tiles[1] << 4) | (tiles[2] << 8) | (tiles[3] << 12)
+}
+
 impl Board {
+    /// Constructs a board from an array of integers. Useful for tests.
+    pub const fn from_array(tiles: [[u64; 4]; 4]) -> Board {
+        Board(row(tiles[0]) | (row(tiles[1]) << 16) | (row(tiles[2]) << 32) | (row(tiles[3]) << 48))
+    }
+
     pub fn new_random() -> Board {
         Board(0).spawn_random_tile().spawn_random_tile()
     }
@@ -257,15 +267,8 @@ impl fmt::Debug for Board {
 mod tests {
     use super::*;
 
-    const fn row(tiles: [u64; 4]) -> u64 {
-        tiles[0] | (tiles[1] << 4) | (tiles[2] << 8) | (tiles[3] << 12)
-    }
-
-    const fn board(tiles: [[u64; 4]; 4]) -> Board {
-        Board(row(tiles[0]) | (row(tiles[1]) << 16) | (row(tiles[2]) << 32) | (row(tiles[3]) << 48))
-    }
-
-    const BOARD_1: Board = board([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]);
+    const BOARD_1: Board =
+        Board::from_array([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]);
 
     #[test]
     fn at() {
