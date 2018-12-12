@@ -4,7 +4,8 @@ from shared import build, train, plot_many, get_args, load_json
 
 args = get_args()
 
-build()
+if not args.plot_only:
+    build()
 
 if args.v_function == "small":
     if not args.plot_only:

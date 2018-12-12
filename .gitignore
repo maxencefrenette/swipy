@@ -10,7 +10,7 @@ __pycache__/
 /.vscode
 
 # Trained Networks
-/networks/*.backup.json
+/networks/backup/*
 ## This one is just too large for git
 /networks/n_tuple_medium*
 

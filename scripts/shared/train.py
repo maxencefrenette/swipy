@@ -37,10 +37,18 @@ def train(v_function, num_games, alpha, benchmark_interval=5000):
 
             print(f"Game {message['game']}, Average Score: {message['test_score']}")
         else:
-            if os.path.isfile(f"networks/{v_function}.json"):
-                os.replace(
-                    f"networks/{v_function}.json", f"networks/{v_function}.backup.json"
-                )
+            if os.path.isfile(f"networks/{v_function}.json") or os.path.isfile(
+                f"networks/{v_function}.training.json"
+            ):
+                os.mkdir("networks/backup")
+
+            move_if_exists(
+                f"networks/{v_function}.json", f"networks/backup/{v_function}.json"
+            )
+            move_if_exists(
+                f"networks/{v_function}.training.json",
+                f"networks/backup/{v_function}.training.json",
+            )
 
             with open(f"networks/{v_function}.json", "w") as file:
                 file.write(line)
@@ -55,3 +63,8 @@ def train(v_function, num_games, alpha, benchmark_interval=5000):
         json.dump(history, file)
 
     return history
+
+
+def move_if_exists(source, dest):
+    if os.path.isfile(source):
+        os.replace(source, dest)
