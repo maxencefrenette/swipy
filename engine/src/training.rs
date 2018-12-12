@@ -57,7 +57,7 @@ pub fn train_td<F>(
 
             let delta = alpha * (r + next_eval - eval);
 
-            engine.learn(state, delta);
+            engine.learn(afterstate, delta);
 
             state = next_state;
         }
