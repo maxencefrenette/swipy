@@ -16,3 +16,6 @@ __pycache__/
 
 # Plotly plots
 temp-plot.html
+
+# Jupyter
+.ipynb_checkpoints

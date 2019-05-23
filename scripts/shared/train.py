@@ -4,7 +4,7 @@ from subprocess import run, Popen, PIPE
 from .__init__ import executable
 
 
-def train(v_function, num_games, alpha, benchmark_interval=5000):
+def train(v_function, num_games, alpha, benchmark_interval=5000, save=True):
     process = Popen(
         executable
         + [
@@ -37,21 +37,23 @@ def train(v_function, num_games, alpha, benchmark_interval=5000):
 
             print(f"Game {message['game']}, Average Score: {message['test_score']}")
         else:
-            if os.path.isfile(f"networks/{v_function}.json") or os.path.isfile(
-                f"networks/{v_function}.training.json"
-            ):
-                os.mkdir("networks/backup")
+            if save:
+                if not os.path.exists("networks/backup") and (
+                    os.path.isfile(f"networks/{v_function}.json")
+                    or os.path.isfile(f"networks/{v_function}.training.json")
+                ):
+                    os.mkdir("networks/backup")
 
-            move_if_exists(
-                f"networks/{v_function}.json", f"networks/backup/{v_function}.json"
-            )
-            move_if_exists(
-                f"networks/{v_function}.training.json",
-                f"networks/backup/{v_function}.training.json",
-            )
+                move_if_exists(
+                    f"networks/{v_function}.json", f"networks/backup/{v_function}.json"
+                )
+                move_if_exists(
+                    f"networks/{v_function}.training.json",
+                    f"networks/backup/{v_function}.training.json",
+                )
 
-            with open(f"networks/{v_function}.json", "w") as file:
-                file.write(line)
+                with open(f"networks/{v_function}.json", "w") as file:
+                    file.write(line)
 
     history = {
         "games": games,

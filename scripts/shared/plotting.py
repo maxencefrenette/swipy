@@ -1,4 +1,4 @@
-import plotly.offline as py
+from plotly.offline import plot, iplot
 import plotly.graph_objs as go
 
 # Color palette from http://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=8
@@ -14,7 +14,7 @@ c = [
 ]
 
 
-def plot_many(histories):
+def plot_many(histories, jupyter=False):
     traces = []
     for i, (name, h) in enumerate(histories):
         traces.append(
@@ -34,4 +34,9 @@ def plot_many(histories):
             )
         )
 
-    py.plot({"data": traces, "layout": go.Layout(title="Training")}, auto_open=True)
+    params = {"data": traces, "layout": go.Layout(title="Training")}
+
+    if not jupyter:
+        plot(params, auto_open=True)
+    else:
+        iplot(params)

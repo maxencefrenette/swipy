@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 from subprocess import run, Popen, PIPE
 from .plotting import *
